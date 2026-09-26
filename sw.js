@@ -1,7 +1,7 @@
 // Service worker för Onyktra Spelen: cachar appen och ljudklippen så att de fungerar offline.
 // Höj VERSION när appfiler, config.json eller klipp ändras.
 
-const VERSION = 'onyktra-v2';
+const VERSION = 'onyktra-v3';
 
 const APPFILER = [
   './',

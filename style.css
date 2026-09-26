@@ -21,7 +21,6 @@
 :root {
   --bg: #0F1620;
   --surface: #18212D;
-  --done: #131B25;
   --active: #1E2733;
   --line: #263244;
   --text: #F2EEE6;
@@ -182,9 +181,6 @@ h2 {
 .gdesc { font-size: 13px; color: var(--muted); }
 .gsong { display: flex; gap: 6px; align-items: center; font-size: 13px; color: #C9D1DB; white-space: nowrap; overflow: hidden; }
 .gsong span { overflow: hidden; text-overflow: ellipsis; }
-.gren.klar { background: var(--done); border-color: #1E2835; }
-.gren.klar .num { color: var(--muted); }
-.gren.klar .status, .gren.klar .gsong { color: var(--muted); }
 .gren.pagar { background: var(--active); border-color: var(--accent); }
 .gren.pagar .num { background: var(--accent); color: var(--bg); }
 .gren.pagar .status, .gren.pagar .gsong { color: var(--accent); }
@@ -327,11 +323,3 @@ h2 {
 .play-sm { width: 52px; height: 52px; border-radius: 26px; flex-shrink: 0; }
 .btn-stor { flex: none; width: 100%; min-height: 56px; font-size: 17px; }
 
-
-.next {
-  width: 100%; min-height: 56px; padding: 0 16px; border-radius: 14px;
-  display: flex; justify-content: space-between; align-items: center;
-  border: 1px solid var(--line); background: transparent; text-align: left;
-}
-.next b { font-weight: 600; }
-.next small { color: var(--muted); font-size: 13px; }
