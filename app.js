@@ -765,6 +765,8 @@ function stoppaTimer() {
 function vaxlaTimer() {
   if (timer.slut != null) {
     stoppaTimer();
+    // Stoppuret blåser av med samma ljud som vid start (visselpipan).
+    if (timer.lage === 'stoppur') spelaEffekt(timerEffekt(hittaGren(timer.gren), 'timerStartEffekt', 'startskott'));
     renderTimer();
     return;
   }
