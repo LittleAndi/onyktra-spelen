@@ -151,6 +151,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 /sw.js           – service worker (offline-cache)
 /manifest.webmanifest
 /icons/icon-192.png, icon-512.png
+/fonts/*.woff2    – självhostade typsnitt (fungerar offline)
 ```
 
 ## Acceptanskriterier

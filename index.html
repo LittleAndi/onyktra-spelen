@@ -5,15 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F1620">
 <title>Onyktra Spelen</title>
-<link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OS">
+<link rel="preload" href="fonts/big-shoulders-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibm-plex-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 <script type="module" src="app.js"></script>
 </head>
 <body>
 <div class="banner" id="banner" role="status" hidden></div>
+<button class="banner banner-version" type="button" id="ny-version" hidden>Ny version – ladda om</button>
 
 <main class="screen" id="start">
   <header>
@@ -25,6 +31,7 @@
     <div class="rad"><span>Spotify-konto</span><span class="rad-varde" id="start-konto">Ej inloggad</span></div>
     <div class="rad"><span>Spotify-spelare</span><span class="rad-varde" id="start-spelare">Ej ansluten</span></div>
     <div class="rad"><span>Ljudklipp</span><span class="rad-varde" id="start-klipp">–</span></div>
+    <div class="rad"><span>Offline</span><span class="rad-varde" id="start-offline">Kontrollerar…</span></div>
   </section>
 
   <div class="falt" id="klientid-falt" hidden>
