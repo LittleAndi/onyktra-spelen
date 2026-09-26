@@ -291,7 +291,7 @@ h2 {
   border: none; background: transparent;
   font-size: 14px; font-weight: 500;
 }
-.hero h1 { font-size: 72px; overflow-wrap: anywhere; }
+.hero h1 { font-size: 72px; } /* krymps i app.js så att ord inte bryts */
 .hero p { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
 .tag {
   display: inline-block; margin-bottom: 6px;
