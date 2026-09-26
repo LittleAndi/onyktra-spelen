@@ -5,7 +5,7 @@ Grenarna (ordning, namn, beskrivning, meningen och låt) sparas i Supabase och k
 ## Engångsinställning
 
 1. Skapa ett projekt på [supabase.com](https://supabase.com) (gratisnivån räcker).
-2. Öppna **SQL Editor** och klistra in `docs/supabase.sql`. Första gången: byt `BYT-MIG` längst ner mot en egen PIN-kod (gärna minst 6 tecken). Kör skriptet.
+2. Öppna **SQL Editor** och klistra in `docs/supabase.sql`. Första gången: byt `BYT-MIG` längst ner mot en egen PIN-kod med bara siffror (gärna minst 6) – appen visar ett siffertangentbord. Kör skriptet.
    - Skriptet skapar tabellen `grenar` med RLS aktiverat: alla kan läsa, ingen kan skriva direkt.
    - Skrivning går bara via funktionerna `spara_gren()` och `sortera_grenar()`, som kräver PIN-koden. Koden sparas hashad i tabellen `installningar`, som inte går att läsa via API:t.
 3. Gå till **Project Settings → API Keys** och kopiera projektets URL och den publika nyckeln (*publishable key*, eller den äldre *anon key*). Nyckeln är publik och får ligga i repot – använd aldrig *secret*/*service_role*-nyckeln.
