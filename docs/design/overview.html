@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onyktra Spelen – designskiss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Designskiss – statisk referens, inte produktionskod. */
+:root{--bg:#0F1620;--surface:#18212D;--done:#131B25;--active:#1E2733;--line:#263244;--text:#F2EEE6;--muted:#9AA6B5;--accent:#E8B04A;--ice:#7CC4E8;--warn:#E8795A;
+--display:'Big Shoulders Display',sans-serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace}
+*{box-sizing:border-box}
+body{margin:0;background:#070B10;color:var(--text);font-family:var(--sans);padding:40px 24px;display:flex;gap:48px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.frame{display:flex;flex-direction:column;gap:12px}
+.frame-label{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.screen{width:390px;background:var(--bg);border-radius:28px;padding:28px 16px 32px;display:flex;flex-direction:column;gap:24px;border:1px solid #1B2430}
+button{font-family:inherit;color:var(--text);cursor:pointer}
+a{color:var(--text);text-decoration:none}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0;font-family:var(--display);font-weight:800;font-size:44px;line-height:.95;text-transform:uppercase}
+h2{margin:0;font-family:var(--display);font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.02em}
+.head{display:flex;justify-content:space-between;align-items:flex-end}
+.counter{text-align:right} .counter small{display:block;font-size:12px;color:var(--muted)} .counter b{font-family:var(--mono);font-weight:500;font-size:22px;color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.np{display:flex;gap:14px;align-items:center}
+.art{width:56px;height:56px;border-radius:10px;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:26px;flex-shrink:0}
+.np-meta{display:flex;flex-direction:column;gap:2px} .np-title{font-size:17px;font-weight:600} .np-artist{font-size:14px;color:var(--muted)}
+.progress{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.bar{flex:1;height:4px;border-radius:2px;background:var(--line)} .bar i{display:block;height:4px;width:42%;border-radius:2px;background:var(--accent)}
+.controls{display:flex;align-items:center;justify-content:space-between} .transport{display:flex;gap:8px;align-items:center}
+.icon-btn{width:44px;height:44px;border-radius:22px;border:1px solid var(--line);background:transparent;display:flex;align-items:center;justify-content:center}
+.play{width:56px;height:56px;border-radius:28px;border:none;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center}
+.pill{white-space:nowrap;height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--accent);background:transparent;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+.pill .dot{background:var(--accent)}
+.section{display:flex;flex-direction:column;gap:10px} .section-head{display:flex;justify-content:space-between;align-items:baseline} .section-head span{font-size:13px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.gren{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.gren svg{flex-shrink:0}
+.num{width:40px;height:40px;border-radius:10px;background:var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:22px;flex-shrink:0}
+.gtext{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.gname{font-size:17px;font-weight:600} .status{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+.gdesc{font-size:13px;color:var(--muted)}
+.gsong{display:flex;gap:6px;align-items:center;font-size:13px;color:#C9D1DB;white-space:nowrap;overflow:hidden} .gsong span{overflow:hidden;text-overflow:ellipsis}
+.gren.klar{background:var(--done);border-color:#1E2835} .gren.klar .num{color:var(--muted)} .gren.klar .status,.gren.klar .gsong{color:var(--muted)}
+.gren.nu{background:var(--active);border-color:var(--accent)} .gren.nu .num{background:var(--accent);color:var(--bg)} .gren.nu .status,.gren.nu .gsong{color:var(--accent)}
+.pads{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pad{height:76px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:12px;text-align:left}
+.dot{width:8px;height:8px;border-radius:4px;display:inline-block}
+.pname{display:block;font-size:15px;font-weight:600} .psub{display:block;font-size:11px;color:var(--muted)}
+.foot{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)} .foot .dot{background:var(--ice)}
+/* Aktiv gren */
+.topbar{display:flex;justify-content:space-between;align-items:center} .back{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;min-height:44px} .topbar small{font-size:13px;color:var(--muted)}
+.hero h1{font-size:72px} .hero p{margin:8px 0 0;font-size:15px;color:var(--muted)}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.phrase{border:1px dashed var(--accent);border-radius:14px;padding:14px 16px;background:var(--surface)} .phrase small{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase} .phrase div{font-size:19px;font-weight:600;margin-top:4px}
+.timer{font-family:var(--mono);font-weight:500;font-size:72px;line-height:1;text-align:center;letter-spacing:.02em}
+.row{display:flex;gap:8px}
+.btn-primary{flex:1;height:52px;border-radius:14px;border:none;background:var(--accent);color:var(--bg);font-size:16px;font-weight:600}
+.btn-ghost{height:52px;padding:0 18px;border-radius:14px;border:1px solid var(--line);background:transparent;font-size:15px;font-weight:500}
+.next{display:flex;justify-content:space-between;align-items:center;height:56px;padding:0 16px;border-radius:14px;border:1px solid var(--line);font-weight:600} .next small{color:var(--muted);font-weight:400;font-size:13px}
+</style>
+</head>
+<body>
+
+<section class="frame">
+<div class="frame-label">1 · Översikt</div>
+<main class="screen">
+<header class="head">
+<div><div class="eyebrow">OS · Thomas 50 år</div><h1>Onyktra Spelen</h1></div>
+<div class="counter"><small>Gren</small><b>3/7</b></div>
+</header>
+<div class="card">
+<div class="np"><div class="art">03</div><div class="np-meta"><div class="eyebrow" style="letter-spacing:.08em">Spelas nu · Spotify</div><div class="np-title">Gonna Fly Now</div><div class="np-artist">Bill Conti · Rocky</div></div></div>
+<div class="progress"><span>1:12</span><div class="bar"><i></i></div><span>2:48</span></div>
+<div class="controls">
+<div class="transport"><button class="icon-btn" aria-label="Föregående"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button><button class="play" aria-label="Pausa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="5" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="19"/></svg></button><button class="icon-btn" aria-label="Nästa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button></div>
+<button class="pill" aria-pressed="true"><span class="dot"></span>Sänk vid klipp · 30%</button>
+</div>
+</div>
+<div class="section">
+<div class="section-head"><h2>Grenar</h2><span>Tryck för att starta</span></div>
+<div class="list">
+<a class="gren klar" href="#aktiv"><span class="num">1</span><span class="gtext"><span class="gname">Hockey <span class="status">Klar</span></span><span class="gdesc">Vinter · Ishockeyspel</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Chelsea Dagger · The Fratellis</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+<a class="gren klar" href="#aktiv"><span class="num">2</span><span class="gtext"><span class="gname">Curling <span class="status">Klar</span></span><span class="gdesc">Vinter · Curling på bord</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>An der schönen blauen Donau · Strauss</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+<a class="gren nu" href="#aktiv"><span class="num">3</span><span class="gtext"><span class="gname">Boxning <span class="status">Pågår</span></span><span class="gdesc">Sommar · Marshmallows i munnen + meningen</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Gonna Fly Now · Bill Conti</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+<a class="gren " href="#aktiv"><span class="num">4</span><span class="gtext"><span class="gname">Fotboll <span class="status"></span></span><span class="gdesc">Sommar · Kicka boll</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Seven Nation Army · The White Stripes</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+<a class="gren " href="#aktiv"><span class="num">5</span><span class="gtext"><span class="gname">Basket <span class="status"></span></span><span class="gdesc">Sommar · Spotta groda</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Jump · Van Halen</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+<a class="gren " href="#aktiv"><span class="num">6</span><span class="gtext"><span class="gname">Slalom <span class="status"></span></span><span class="gdesc">Vinter · Shot-slalom med shots och godis</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Shots · LMFAO</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+<a class="gren " href="#aktiv"><span class="num">7</span><span class="gtext"><span class="gname">Hästhoppning <span class="status"></span></span><span class="gdesc">Sommar · Käpphäst, tre hinder</span><span class="gsong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Wilhelm Tell-uvertyren · Rossini</span></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+</div>
+</div>
+<div class="section">
+<div class="section-head"><h2>Ljudeffekter</h2><span>Spelas ovanpå musiken</span></div>
+<div class="pads"><button class="pad"><span class="dot" style="background:#E8B04A"></span><span><span class="pname">Mållur</span><span class="psub">Hockey &amp; fotboll</span></span></button><button class="pad"><span class="dot" style="background:#E8B04A"></span><span><span class="pname">Gong</span><span class="psub">Boxning</span></span></button><button class="pad"><span class="dot" style="background:#7CC4E8"></span><span><span class="pname">Startskott</span><span class="psub">Alla grenar</span></span></button><button class="pad"><span class="dot" style="background:#7CC4E8"></span><span><span class="pname">Jubel</span><span class="psub">Vinnare</span></span></button><button class="pad"><span class="dot" style="background:#7CC4E8"></span><span><span class="pname">Trumvirvel</span><span class="psub">Inför resultat</span></span></button><button class="pad"><span class="dot" style="background:#E8795A"></span><span><span class="pname">Buu</span><span class="psub">Miss</span></span></button></div>
+</div>
+<div class="foot"><span class="dot"></span>Spotify strömmas via wifi · klippen ligger lokalt och fungerar offline</div>
+</main>
+</section>
+
+<section class="frame" id="aktiv">
+<div class="frame-label">2 · Aktiv gren</div>
+<main class="screen">
+<div class="topbar"><a class="back" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Alla grenar</a><small>Gren 3 av 7</small></div>
+<div class="hero"><span class="tag">Sommar</span><h1>Boxning</h1><p>Marshmallows i munnen – säg meningen tydligt.</p></div>
+<div class="phrase"><small>Meningen</small><div>”[MENINGEN SOM SKA SÄGAS]”</div></div>
+<div class="card" style="gap:16px">
+<div class="timer">01:00</div>
+<div class="row"><button class="btn-primary">Starta</button><button class="btn-ghost">Återställ</button></div>
+</div>
+<div class="card">
+<div class="np"><div class="art">03</div><div class="np-meta"><div class="np-title">Gonna Fly Now</div><div class="np-artist">Bill Conti · Rocky</div></div></div>
+<div class="row"><button class="play" aria-label="Spela" style="width:52px;height:52px"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg></button><button class="btn-ghost" style="flex:1">Tona ut</button></div>
+</div>
+<div class="section">
+<div class="section-head"><h2>Effekter</h2><span>För grenen</span></div>
+<div class="pads"><button class="pad"><span class="dot" style="background:#E8B04A"></span><span><span class="pname">Gong</span><span class="psub">Boxning</span></span></button><button class="pad"><span class="dot" style="background:#7CC4E8"></span><span><span class="pname">Jubel</span><span class="psub">Vinnare</span></span></button><button class="pad"><span class="dot" style="background:#7CC4E8"></span><span><span class="pname">Trumvirvel</span><span class="psub">Inför resultat</span></span></button></div>
+</div>
+<div class="row"><button class="btn-primary">Klar – nästa gren</button></div>
+<a class="next" href="#"><span>Fotboll <small>· nästa</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+</main>
+</section>
+
+</body>
+</html>

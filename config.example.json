@@ -1,0 +1,23 @@
+{
+  "spotifyClientId": "DIN_CLIENT_ID",
+  "redirectUri": "https://littleandi.github.io/onyktra-spelen/",
+  "duckLevel": 0.3,
+  "timerSekunder": 60,
+  "grenar": [
+    { "id": "hockey", "sasong": "vinter", "namn": "Hockey", "beskrivning": "Ishockeyspel", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["mallur", "startskott"] },
+    { "id": "curling", "sasong": "vinter", "namn": "Curling", "beskrivning": "Curling på bord", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["startskott", "jubel"] },
+    { "id": "boxning", "sasong": "sommar", "namn": "Boxning", "beskrivning": "Marshmallows i munnen + säg meningen", "mening": "[MENINGEN]", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["gong", "jubel", "trumvirvel"] },
+    { "id": "fotboll", "sasong": "sommar", "namn": "Fotboll", "beskrivning": "Kicka boll", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["mallur", "jubel"] },
+    { "id": "basket", "sasong": "sommar", "namn": "Basket", "beskrivning": "Spotta groda", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["jubel", "buu"] },
+    { "id": "slalom", "sasong": "vinter", "namn": "Slalom", "beskrivning": "Shot-slalom med shots och godis", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["startskott", "jubel"] },
+    { "id": "hasthoppning", "sasong": "sommar", "namn": "Hästhoppning", "beskrivning": "Käpphäst, tre hinder", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["startskott", "buu", "jubel"] }
+  ],
+  "effekter": [
+    { "id": "mallur", "namn": "Mållur", "fil": "clips/mallur.mp3" },
+    { "id": "gong", "namn": "Gong", "fil": "clips/gong.mp3" },
+    { "id": "startskott", "namn": "Startskott", "fil": "clips/startskott.mp3" },
+    { "id": "jubel", "namn": "Jubel", "fil": "clips/jubel.mp3" },
+    { "id": "trumvirvel", "namn": "Trumvirvel", "fil": "clips/trumvirvel.mp3" },
+    { "id": "buu", "namn": "Buu", "fil": "clips/buu.mp3" }
+  ]
+}
