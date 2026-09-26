@@ -1,7 +1,8 @@
 // Service worker för Onyktra Spelen: cachar appen och ljudklippen så att de fungerar offline.
-// Höj VERSION när appfiler, config.json eller klipp ändras.
+// VERSION sätts vid driftsättning (.github/workflows/pages.yml) till en hash av de publicerade
+// filerna, så att telefonen hämtar en ny version så fort något ändrats. Lokalt är den 'onyktra-dev'.
 
-const VERSION = 'onyktra-v4';
+const VERSION = 'onyktra-dev';
 
 const APPFILER = [
   './',
