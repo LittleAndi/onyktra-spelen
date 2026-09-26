@@ -17,6 +17,9 @@ const APPFILER = [
   'fonts/ibm-plex-mono-500.woff2',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'icons/icon.svg',
+  'icons/apple-touch-icon.png',
+  'icons/icon-maskable-512.png',
 ];
 
 // Spotify och Google Fonts-API:t går alltid direkt till nätet och cachas aldrig.
