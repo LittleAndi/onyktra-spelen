@@ -112,7 +112,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 ### 1. Översikt (huvudvy)
 - Rubrik: "OS · Thomas 50 år / Onyktra Spelen", räknare "Gren 3/7".
 - **Spelas nu-kort**: låtnamn, artist, förlopp, knappar föregående/paus/nästa, reglage "Sänk vid klipp" (på/av + nivå), "Tona ut" (fade till 0 på 3 s, sedan paus).
-- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning, låt och status (kommande / pågår / klar). Tryck → startar grenens låt och öppnar grenvyn. Spelar musik eller ett klipp redan startas ingen ny låt, så att det som spelar får fortsätta.
+- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning, låt och status (kommande / pågår / klar). Tryck → öppnar grenvyn. Musiken startas inte automatiskt; grenens låt startas manuellt med play-knappen i grenvyn, och det som redan spelar får fortsätta.
 - **Effektknappar**: rutnät 3×2, spelas direkt vid tryck (flera kan överlappa).
 - Sidfot: nätstatus.
 
@@ -158,7 +158,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 ## Acceptanskriterier
 
 1. Inloggning med Spotify fungerar från telefon (iPhone Safari och Android Chrome).
-2. Tryck på en gren startar rätt låt inom ~1 s när inget annat spelar; spelar musik eller klipp fortsätter det.
+2. Tryck på en gren startar ingen musik; play i grenvyn startar rätt låt inom ~1 s. Spelar musik eller klipp fortsätter det.
 3. En effekt spelas ovanpå pågående låt utan att låten pausas; låten sänks till `duckLevel` och återgår efteråt.
 4. Efter första besöket går appen att öppna och klippen att spela i flygplansläge, även efter omladdning.
 5. Omladdning av sidan behåller grenstatus.
