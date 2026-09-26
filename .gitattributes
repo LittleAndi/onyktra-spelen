@@ -1,0 +1,2 @@
+# Skalskript måste ha LF, annars går de inte att köra (även vid checkout på Windows).
+*.sh text eol=lf

@@ -29,7 +29,7 @@ jobs:
           mkdir _site
           tar -c \
             --exclude=./.git --exclude=./.github --exclude=./.claude --exclude=./_site \
-            --exclude=./docs --exclude=./scripts --exclude='*.md' --exclude=./config.example.json \
+            --exclude=./docs --exclude=./scripts --exclude=./clips/original --exclude='*.md' --exclude=./config.example.json \
             . | tar -x -C _site
           touch _site/.nojekyll
           find _site -type f | sort
