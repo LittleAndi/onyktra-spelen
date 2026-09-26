@@ -3,12 +3,12 @@
 import * as spotify from './spotify.js';
 import * as ljud from './audio.js';
 
-const STATUS_KEY = 'os.grenstatus';
+const AKTUELL_KEY = 'os.aktuellGren';
+const GAMMAL_STATUS_KEY = 'os.grenstatus';
 const DUCKING_KEY = 'os.ducking';
 const KLIENTID_KEY = 'os.clientId';
 const TRACK_URI = /^spotify:track:[A-Za-z0-9]{22}$/;
 
-const STATUS_TEXT = { kommande: '', pagar: 'Pågår', klar: 'Klar' };
 const SASONG_TEXT = { sommar: 'Sommar', vinter: 'Vinter' };
 
 const ICON_NOT = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
@@ -17,7 +17,7 @@ const ICON_PIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" st
 const $ = (id) => document.getElementById(id);
 
 let config;
-let status = {};
+let aktuellGren = null; // id för grenen som senast öppnades
 let spelarStatus = null;
 let klippStatus = null; // { laddade, totalt, fel } när förladdningen är klar
 let duckad = false;
@@ -53,10 +53,6 @@ function sparaLagrat(key, varde) {
   } catch {
     // Lagring otillgänglig (t.ex. privat läge) – appen fungerar ändå under sessionen.
   }
-}
-
-function grenStatus(id) {
-  return status[id] ?? 'kommande';
 }
 
 function latText(gren) {
@@ -96,32 +92,11 @@ async function spelaGren(gren) {
   }
 }
 
-// Att starta en gren sätter den som "pågår" och den som pågick som "klar".
-// Musiken startas aldrig automatiskt – man trycker play i grenvyn själv.
-function startaGren(id) {
-  spotify.aktivera();
-  for (const [annan, s] of Object.entries(status)) {
-    if (s === 'pagar' && annan !== id) status[annan] = 'klar';
-  }
-  status[id] = 'pagar';
-  sparaLagrat(STATUS_KEY, status);
-  render();
-}
-
 const hittaGren = (id) => config.grenar.find((g) => g.id === id);
 
-function nollstall() {
-  if (!confirm('Nollställ status för alla grenar?')) return;
-  status = {};
-  sparaLagrat(STATUS_KEY, status);
-  render();
-}
-
 function renderRaknare() {
-  const total = config.grenar.length;
-  const pagar = config.grenar.findIndex((g) => grenStatus(g.id) === 'pagar');
-  const klara = config.grenar.filter((g) => grenStatus(g.id) === 'klar').length;
-  $('raknare').textContent = `${pagar >= 0 ? pagar + 1 : klara}/${total}`;
+  const index = config.grenar.findIndex((g) => g.id === aktuellGren);
+  $('raknare').textContent = `${index >= 0 ? index + 1 : '–'}/${config.grenar.length}`;
 }
 
 function formateraTid(ms) {
@@ -130,7 +105,7 @@ function formateraTid(ms) {
   return `${Math.floor(sek / 60)}:${String(sek % 60).padStart(2, '0')}`;
 }
 
-// Visar Spotify-spelarens låt om den finns, annars den pågående grenens låt.
+// Visar Spotify-spelarens låt om den finns, annars den aktuella grenens låt.
 function renderSpelasNu() {
   if (spelarStatus?.titel) {
     const index = config.grenar.findIndex((g) => spelarStatus.uris.includes(g.spotifyUri));
@@ -138,7 +113,7 @@ function renderSpelasNu() {
     $('np-titel').textContent = spelarStatus.titel;
     $('np-artist').textContent = spelarStatus.artist;
   } else {
-    const index = config.grenar.findIndex((g) => grenStatus(g.id) === 'pagar');
+    const index = config.grenar.findIndex((g) => g.id === aktuellGren);
     const gren = config.grenar[index];
     $('np-nr').textContent = gren ? String(index + 1).padStart(2, '0') : '–';
     $('np-titel').textContent = gren ? (gren.lat || gren.namn) : 'Ingen låt';
@@ -178,20 +153,17 @@ function renderDucking() {
 
 function renderGrenar() {
   const rader = config.grenar.map((gren, i) => {
-    const s = grenStatus(gren.id);
-    const knapp = el('button', { class: `gren ${s}`, type: 'button', 'data-id': gren.id },
+    const aktuell = gren.id === aktuellGren;
+    const knapp = el('button', { class: `gren${aktuell ? ' pagar' : ''}`, type: 'button', 'data-id': gren.id },
       el('span', { class: 'num' }, String(i + 1)),
       el('span', { class: 'gtext' },
-        el('span', { class: 'gname' }, gren.namn, ' ', el('span', { class: 'status' }, STATUS_TEXT[s])),
+        el('span', { class: 'gname' }, gren.namn, ' ', el('span', { class: 'status' }, aktuell ? 'Pågår' : '')),
         el('span', { class: 'gdesc' }, [SASONG_TEXT[gren.sasong], gren.beskrivning].filter(Boolean).join(' · ')),
         el('span', { class: 'gsong', html: ICON_NOT }, el('span', {}, latText(gren))),
       ),
       el('span', { html: ICON_PIL }),
     );
-    knapp.addEventListener('click', () => {
-      if (grenStatus(gren.id) !== 'pagar') startaGren(gren.id);
-      oppnaGren(gren.id);
-    });
+    knapp.addEventListener('click', () => oppnaGren(gren.id));
     return knapp;
   });
   $('grenar').replaceChildren(...rader);
@@ -302,15 +274,18 @@ async function laddaConfig() {
 
 function oppnaGren(id, { ersatt = false } = {}) {
   if (!hittaGren(id)) return;
+  // Musiken startas aldrig automatiskt – man trycker play i grenvyn själv.
+  spotify.aktivera();
   if (timer.gren !== id) aterstallTimer(id);
   aktivGren = id;
+  aktuellGren = id;
+  sparaLagrat(AKTUELL_KEY, id);
   // Historikpost så att telefonens bakåtknapp leder till översikten.
   const tillstand = { gren: id };
   if (ersatt || history.state?.gren) history.replaceState(tillstand, '');
   else history.pushState(tillstand, '');
   visaVy('grenvy');
-  aktivGren = id;
-  renderGrenvy();
+  render();
 }
 
 function stangGren() {
@@ -326,7 +301,6 @@ function nastaGren(id) {
 function renderGrenvy() {
   const index = config.grenar.findIndex((g) => g.id === aktivGren);
   const gren = config.grenar[index];
-  const s = grenStatus(gren.id);
 
   $('g-nummer').textContent = `Gren ${index + 1} av ${config.grenar.length}`;
   $('g-sasong').textContent = SASONG_TEXT[gren.sasong] ?? '';
@@ -337,11 +311,7 @@ function renderGrenvy() {
   $('g-mening').textContent = gren.mening ? `”${gren.mening}”` : '';
 
   const nasta = nastaGren(gren.id);
-  $('g-klar').textContent = s === 'pagar'
-    ? (nasta ? 'Klar – nästa gren' : 'Klar – sista grenen')
-    : (s === 'klar' ? 'Kör grenen igen' : 'Starta grenen');
-  $('g-nasta').hidden = !nasta;
-  $('g-nasta-namn').textContent = nasta?.namn ?? '';
+  $('g-nasta').textContent = nasta ? `Nästa gren – ${nasta.namn}` : 'Tillbaka till alla grenar';
 
   renderGrenMusik();
   renderTimer();
@@ -404,23 +374,11 @@ function avbrytToning() {
   renderTona();
 }
 
-function klarMedGren() {
-  const gren = hittaGren(aktivGren);
-  if (grenStatus(gren.id) !== 'pagar') {
-    startaGren(gren.id);
-    return;
-  }
+function tillNastaGren() {
   stoppaTimer();
-  const nasta = nastaGren(gren.id);
-  if (nasta) {
-    startaGren(nasta.id); // Sätter även nuvarande gren som klar.
-    oppnaGren(nasta.id, { ersatt: true });
-  } else {
-    status[gren.id] = 'klar';
-    sparaLagrat(STATUS_KEY, status);
-    render();
-    stangGren();
-  }
+  const nasta = nastaGren(aktivGren);
+  if (nasta) oppnaGren(nasta.id, { ersatt: true });
+  else stangGren();
 }
 
 // --- Timer ---
@@ -509,11 +467,7 @@ function initGrenvy() {
   $('t-plus').addEventListener('click', () => justeraTimer(15));
   $('g-spela').addEventListener('click', spelaGrenMusik);
   $('g-tona').addEventListener('click', tonaUt);
-  $('g-klar').addEventListener('click', klarMedGren);
-  $('g-nasta').addEventListener('click', () => {
-    const nasta = nastaGren(aktivGren);
-    if (nasta) oppnaGren(nasta.id, { ersatt: true });
-  });
+  $('g-nasta').addEventListener('click', tillNastaGren);
   window.addEventListener('popstate', (e) => {
     if ($('start').hidden === false) return;
     if (e.state?.gren && hittaGren(e.state.gren)) oppnaGren(e.state.gren, { ersatt: true });
@@ -749,7 +703,8 @@ async function init() {
     return;
   }
 
-  status = lasLagrat(STATUS_KEY, {});
+  aktuellGren = lasLagrat(AKTUELL_KEY, null);
+  try { localStorage.removeItem(GAMMAL_STATUS_KEY); } catch { /* Lagring otillgänglig. */ }
   // Efter omladdning börjar appen på startvyn; släng en gammal grenpost i historiken.
   if (history.state?.gren) history.replaceState(null, '');
 
@@ -758,7 +713,6 @@ async function init() {
     renderDucking();
     if (duckad) uppdateraDucking();
   });
-  $('nollstall').addEventListener('click', nollstall);
 
   renderDucking();
   renderEffekter();

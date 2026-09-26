@@ -112,7 +112,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 ### 1. Översikt (huvudvy)
 - Rubrik: "OS · Thomas 50 år / Onyktra Spelen", räknare "Gren 3/7".
 - **Spelas nu-kort**: låtnamn, artist, förlopp, knappar föregående/paus/nästa, reglage "Sänk vid klipp" (på/av + nivå), "Tona ut" (fade till 0 på 3 s, sedan paus).
-- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning, låt och status (kommande / pågår / klar). Tryck → öppnar grenvyn. Musiken startas inte automatiskt; grenens låt startas manuellt med play-knappen i grenvyn, och det som redan spelar får fortsätta.
+- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning och låt; den senast öppnade grenen markeras som "pågår". Tryck → öppnar grenvyn. Musiken startas inte automatiskt; grenens låt startas manuellt med play-knappen i grenvyn, och det som redan spelar får fortsätta.
 - **Effektknappar**: rutnät 3×2, spelas direkt vid tryck (flera kan överlappa).
 - Sidfot: nätstatus.
 
@@ -123,11 +123,11 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
   Konfigureras med `timerSekunder`, `timerStartEffekt` och `timerSlutEffekt` i `config.json` (globalt eller per gren). Tiden kan justeras ±15 s innan start.
 - Musikkort: play/paus, "Tona ut" (fade till 0 på 3 s, sedan paus).
 - Alla effektknappar, samma uppsättning och ordning som i översikten.
-- "Markera klar & nästa gren".
+- "Nästa gren" (på sista grenen: tillbaka till översikten).
 
 ## Beteende
 
-- Att starta en gren sätter den som "pågår" och föregående som "klar". Status sparas i `localStorage` så att en omladdning inte nollställer kvällen.
+- Att öppna en gren gör den till aktuell ("pågår", räknaren i rubriken). Vilka grenar som är klara hålls inte reda på. Aktuell gren sparas i `localStorage` så att en omladdning inte tappar bort var kvällen är.
 - Effektklipp: ny `AudioBufferSourceNode` per tryck, gemensam `GainNode` för klippvolym. Ducking aktiv så länge minst ett klipp spelar.
 - Fel från Spotify (t.ex. 401/404 device) → försök förnya token / återansluta enheten automatiskt, visa en diskret banner.
 - Allt ska gå att styra med touch; knappar minst 44 px.
