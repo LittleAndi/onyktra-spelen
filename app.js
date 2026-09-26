@@ -2,7 +2,7 @@
 
 import * as spotify from './spotify.js';
 import * as ljud from './audio.js';
-import * as latar from './latar.js';
+import * as grenar from './grenar.js';
 
 const AKTUELL_KEY = 'os.aktuellGren';
 const GAMMAL_STATUS_KEY = 'os.grenstatus';
@@ -14,12 +14,13 @@ const TRACK_URI = /^spotify:track:[A-Za-z0-9]{22}$/;
 const SASONG_TEXT = { sommar: 'Sommar', vinter: 'Vinter' };
 
 const ICON_NOT = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+const ICON_HANDTAG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="8" x2="19" y2="8"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="16" x2="19" y2="16"/></svg>';
 const ICON_PIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>';
 
 const $ = (id) => document.getElementById(id);
 
 let config;
-let grundGrenar; // grenarna som de står i config.json, utan låtbyten
+let grundGrenar; // grenarna som de står i config.json – används tills grenarna hämtats från Supabase
 let aktuellGren = null; // id för grenen som senast öppnades
 let spelarStatus = null;
 let klippStatus = null; // { laddade, totalt, fel } när förladdningen är klar
@@ -28,6 +29,7 @@ let tonarUt = false;
 let aktivGren = null; // id för grenen som visas i grenvyn
 let bannerTimer;
 let pinKod = ''; // PIN-koden hålls bara i minnet, sparas aldrig i localStorage
+let ordnar = null; // gren-id:n i ny ordning medan man ändrar ordning, annars null
 let startKlar; // anropas när init (inkl. ev. Spotify-inloggning) är klar
 const startKlarLofte = new Promise((klar) => { startKlar = klar; });
 
@@ -158,21 +160,28 @@ function renderDucking() {
 }
 
 function renderGrenar() {
-  const rader = config.grenar.map((gren, i) => {
+  const ordning = ordnar ? ordnar.map(hittaGren) : config.grenar;
+  const rader = ordning.map((gren, i) => {
     const aktuell = gren.id === aktuellGren;
-    const knapp = el('button', { class: `gren${aktuell ? ' pagar' : ''}`, type: 'button', 'data-id': gren.id },
+    const knapp = el(ordnar ? 'div' : 'button', {
+      class: `gren${aktuell ? ' pagar' : ''}`,
+      ...(!ordnar && { type: 'button' }),
+      'data-id': gren.id,
+    },
       el('span', { class: 'num' }, String(i + 1)),
       el('span', { class: 'gtext' },
         el('span', { class: 'gname' }, gren.namn, ' ', el('span', { class: 'status' }, aktuell ? 'Pågår' : '')),
         el('span', { class: 'gdesc' }, [SASONG_TEXT[gren.sasong], gren.beskrivning].filter(Boolean).join(' · ')),
         el('span', { class: 'gsong', html: ICON_NOT }, el('span', {}, latText(gren))),
       ),
-      el('span', { html: ICON_PIL }),
+      el('span', ordnar ? { class: 'handtag', html: ICON_HANDTAG, 'aria-label': `Flytta ${gren.namn}` } : { html: ICON_PIL }),
     );
-    knapp.addEventListener('click', () => oppnaGren(gren.id));
+    if (ordnar) knapp.addEventListener('pointerdown', (e) => borjaDra(e, knapp));
+    else knapp.addEventListener('click', () => oppnaGren(gren.id));
     return knapp;
   });
   $('grenar').replaceChildren(...rader);
+  $('grenar').classList.toggle('ordnas', Boolean(ordnar));
 }
 
 function effektKnapp(effekt) {
@@ -276,26 +285,38 @@ async function laddaConfig() {
   return svar.json();
 }
 
-// --- Låtbyten (Supabase) ---
+// --- Grenar i Supabase ---
 
-// Lägger låtbytena ovanpå grenarna från config.json.
-function tillampaLatar(rader) {
-  const byten = new Map(rader.map((r) => [r.gren_id, r]));
-  config.grenar = grundGrenar.map((gren) => {
-    const byte = byten.get(gren.id);
-    if (!byte) return gren;
-    return { ...gren, spotifyUri: byte.spotify_uri, lat: byte.lat ?? '', artist: byte.artist ?? '', startMs: byte.start_ms ?? 0, bytt: true };
-  });
+// Grenarna från Supabase ersätter dem i config.json. Tom lista (inget hämtat än) → config.json gäller.
+function tillampaGrenar(lista) {
+  config.grenar = lista.length ? lista : grundGrenar;
+  if (ordnar) {
+    // Behåll pågående omsortering, men bara för grenar som fortfarande finns.
+    const ids = config.grenar.map((g) => g.id);
+    ordnar = [...ordnar.filter((id) => ids.includes(id)), ...ids.filter((id) => !ordnar.includes(id))];
+  }
+  if (aktivGren && !hittaGren(aktivGren)) visaVy('oversikt');
   render();
 }
 
-async function hamtaLatar() {
-  if (!latar.arKonfigurerad() || !navigator.onLine) return;
+async function hamtaGrenar() {
+  if (!grenar.arKonfigurerad() || !navigator.onLine || dras) return;
   try {
-    tillampaLatar(await latar.hamta());
+    tillampaGrenar(await grenar.hamta());
   } catch (fel) {
-    console.warn('Kunde inte hämta låtbyten:', fel);
+    console.warn('Kunde inte hämta grenar:', fel);
   }
+}
+
+// Frågar efter PIN-koden i en egen dialog. Tom sträng om man avbryter.
+function fragaPin() {
+  return new Promise((resolve) => {
+    const dialog = $('pin-dialog');
+    $('pd-pin').value = '';
+    dialog.returnValue = '';
+    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'ok' ? $('pd-pin').value.trim() : ''), { once: true });
+    dialog.showModal();
+  });
 }
 
 function tolkaTid(text) {
@@ -304,36 +325,41 @@ function tolkaTid(text) {
   return ((Number(traff[1] ?? 0) * 60) + Number(traff[2])) * 1000;
 }
 
-function visaBytFel(text) {
-  $('bl-fel').textContent = text ?? '';
-  $('bl-fel').hidden = !text;
+// --- Redigera gren ---
+
+function visaRedigeraFel(text) {
+  $('rg-fel').textContent = text ?? '';
+  $('rg-fel').hidden = !text;
 }
 
 function sattLankInfo(text, klass = '') {
-  $('bl-lank-info').textContent = text;
-  $('bl-lank-info').className = klass;
+  $('rg-lank-info').textContent = text;
+  $('rg-lank-info').className = klass;
 }
 
-function oppnaBytLat() {
+function oppnaRedigera() {
   const gren = hittaGren(aktivGren);
-  $('bl-rubrik').textContent = `Byt låt – ${gren.namn}`;
-  $('bl-lank').value = '';
-  $('bl-lat').value = gren.lat ?? '';
-  $('bl-artist').value = gren.artist ?? '';
-  $('bl-start').value = formateraTid(gren.startMs ?? 0);
-  $('bl-pin').value = '';
-  $('bl-pin-falt').hidden = Boolean(pinKod);
-  $('bl-aterstall').hidden = !gren.bytt;
+  $('rg-rubrik').textContent = `Redigera – ${gren.namn}`;
+  $('rg-namn').value = gren.namn ?? '';
+  $('rg-sasong').value = gren.sasong ?? '';
+  $('rg-beskrivning').value = gren.beskrivning ?? '';
+  $('rg-mening').value = gren.mening ?? '';
+  $('rg-lank').value = '';
+  $('rg-lat').value = gren.lat ?? '';
+  $('rg-artist').value = gren.artist ?? '';
+  $('rg-start').value = formateraTid(gren.startMs ?? 0);
+  $('rg-pin').value = '';
+  $('rg-pin-falt').hidden = Boolean(pinKod);
   sattLankInfo('Spotify → Dela → Kopiera länk');
-  visaBytFel(null);
-  $('byt-lat').showModal();
+  visaRedigeraFel(null);
+  $('redigera').showModal();
 }
 
 // Hämtar låtnamn och artist när en giltig länk klistras in.
 let lankUppslag = 0;
 async function lankAndrad() {
-  const text = $('bl-lank').value;
-  const uri = latar.tolkaSpotifyLank(text);
+  const text = $('rg-lank').value;
+  const uri = grenar.tolkaSpotifyLank(text);
   if (!text.trim()) {
     sattLankInfo('Spotify → Dela → Kopiera länk');
     return;
@@ -347,8 +373,8 @@ async function lankAndrad() {
   try {
     const { lat, artist } = await spotify.hamtaLat(uri);
     if (nr !== lankUppslag) return;
-    $('bl-lat').value = lat;
-    $('bl-artist').value = artist;
+    $('rg-lat').value = lat;
+    $('rg-artist').value = artist;
     sattLankInfo('Låt hittad ✓', 'ok');
   } catch (fel) {
     if (nr !== lankUppslag) return;
@@ -357,63 +383,199 @@ async function lankAndrad() {
   }
 }
 
-async function sparaBytLat(aterstall = false) {
+async function sparaRedigering() {
   const gren = hittaGren(aktivGren);
-  const lank = $('bl-lank').value.trim();
-  const uri = aterstall ? null : (lank ? latar.tolkaSpotifyLank(lank) : gren.spotifyUri);
-  const startMs = tolkaTid($('bl-start').value);
-  if (!aterstall && !TRACK_URI.test(uri ?? '')) {
-    visaBytFel('Klistra in en länk till en Spotify-låt.');
+  const namn = $('rg-namn').value.trim();
+  const lank = $('rg-lank').value.trim();
+  const uri = lank ? grenar.tolkaSpotifyLank(lank) : gren.spotifyUri;
+  const startMs = tolkaTid($('rg-start').value);
+  if (!namn) {
+    visaRedigeraFel('Grenen måste ha ett namn.');
     return;
   }
-  if (!aterstall && startMs == null) {
-    visaBytFel('Skriv starttiden som m:ss, t.ex. 0:42.');
+  if (lank && !uri) {
+    visaRedigeraFel('Klistra in en länk till en Spotify-låt.');
     return;
   }
-  const pin = pinKod || $('bl-pin').value.trim();
+  if (startMs == null) {
+    visaRedigeraFel('Skriv starttiden som m:ss, t.ex. 0:42.');
+    return;
+  }
+  const pin = pinKod || $('rg-pin').value.trim();
   if (!pin) {
-    $('bl-pin-falt').hidden = false;
-    visaBytFel('Ange PIN-koden.');
-    $('bl-pin').focus();
+    $('rg-pin-falt').hidden = false;
+    visaRedigeraFel('Ange PIN-koden.');
+    $('rg-pin').focus();
     return;
   }
-  visaBytFel(null);
-  for (const id of ['bl-spara', 'bl-aterstall']) $(id).disabled = true;
+  visaRedigeraFel(null);
+  $('rg-spara').disabled = true;
   try {
-    const rader = await latar.spara(pin, {
-      grenId: gren.id,
-      spotifyUri: uri,
-      lat: $('bl-lat').value.trim() || null,
-      artist: $('bl-artist').value.trim() || null,
+    const lista = await grenar.spara(pin, {
+      ...gren,
+      namn,
+      sasong: $('rg-sasong').value,
+      beskrivning: $('rg-beskrivning').value.trim(),
+      mening: $('rg-mening').value.trim(),
+      spotifyUri: TRACK_URI.test(uri ?? '') ? uri : '',
+      lat: $('rg-lat').value.trim(),
+      artist: $('rg-artist').value.trim(),
       startMs,
     });
     pinKod = pin;
-    tillampaLatar(rader);
-    $('byt-lat').close();
-    visaBanner(aterstall ? `${gren.namn} har fått sin förvalda låt igen.` : `Ny låt sparad för ${gren.namn}.`);
+    tillampaGrenar(lista);
+    $('redigera').close();
+    visaBanner(`${namn} är sparad.`);
   } catch (fel) {
     if (fel.felPin) {
       pinKod = '';
-      $('bl-pin-falt').hidden = false;
-      $('bl-pin').value = '';
+      $('rg-pin-falt').hidden = false;
+      $('rg-pin').value = '';
     }
-    visaBytFel(fel.message);
+    visaRedigeraFel(fel.message);
   } finally {
-    for (const id of ['bl-spara', 'bl-aterstall']) $(id).disabled = false;
+    $('rg-spara').disabled = false;
   }
 }
 
-function initBytLat() {
-  if (!latar.arKonfigurerad()) return;
-  $('g-byt-lat').hidden = false;
-  $('g-byt-lat').addEventListener('click', oppnaBytLat);
-  $('bl-lank').addEventListener('input', lankAndrad);
-  $('bl-avbryt').addEventListener('click', () => $('byt-lat').close());
-  $('bl-form').addEventListener('submit', (e) => {
+function initRedigera() {
+  if (!grenar.arKonfigurerad()) return;
+  $('g-redigera').hidden = false;
+  $('g-redigera').addEventListener('click', oppnaRedigera);
+  $('rg-lank').addEventListener('input', lankAndrad);
+  $('rg-avbryt').addEventListener('click', () => $('redigera').close());
+  $('rg-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    sparaBytLat();
+    sparaRedigering();
   });
-  $('bl-aterstall').addEventListener('click', () => sparaBytLat(true));
+  $('pd-avbryt').addEventListener('click', () => $('pin-dialog').close());
+  $('pd-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    $('pin-dialog').close('ok');
+  });
+}
+
+// --- Ändra ordning (dra i handtaget på översikten) ---
+
+let dras = false;
+
+function numrera() {
+  $('grenar').querySelectorAll('.gren .num').forEach((num, i) => { num.textContent = String(i + 1); });
+}
+
+function borjaDra(e, rad) {
+  if (dras || e.button > 0 || !e.target.closest('.handtag')) return;
+  e.preventDefault();
+  dras = true;
+  const lista = $('grenar');
+  rad.setPointerCapture(e.pointerId);
+  rad.classList.add('drar');
+  // Annars flyttar webbläsarens scroll anchoring sidan när raden byter plats i listan.
+  document.documentElement.style.overflowAnchor = 'none';
+  // Positioner i dokumentkoordinater så att det fungerar även när sidan rullar under dragningen.
+  let startY = e.clientY + window.scrollY;
+  let pekareY = e.clientY;
+  let rullning = 0;
+
+  const flytta = () => {
+    for (;;) {
+      const fore = rad.previousElementSibling;
+      const efter = rad.nextElementSibling;
+      rad.style.transform = `translateY(${pekareY + window.scrollY - startY}px)`;
+      const ruta = rad.getBoundingClientRect();
+      const mitt = ruta.top + ruta.height / 2;
+      const top = rad.offsetTop;
+      if (efter && mitt > efter.getBoundingClientRect().top + efter.offsetHeight / 2) lista.insertBefore(efter, rad);
+      else if (fore && mitt < fore.getBoundingClientRect().top + fore.offsetHeight / 2) lista.insertBefore(rad, fore);
+      else break;
+      startY += rad.offsetTop - top; // raden flyttade i listan – kompensera så att den stannar under fingret
+      numrera();
+    }
+  };
+
+  // Rulla sidan när fingret är nära över- eller underkanten.
+  const rulla = () => {
+    const kant = 70;
+    const steg = pekareY < kant ? -8 : pekareY > window.innerHeight - kant ? 8 : 0;
+    if (steg) {
+      window.scrollBy(0, steg);
+      flytta();
+    }
+    rullning = requestAnimationFrame(rulla);
+  };
+  rullning = requestAnimationFrame(rulla);
+
+  const ror = (ev) => {
+    pekareY = ev.clientY;
+    flytta();
+  };
+  const slut = () => {
+    cancelAnimationFrame(rullning);
+    rad.removeEventListener('pointermove', ror);
+    rad.removeEventListener('pointerup', slut);
+    rad.removeEventListener('pointercancel', slut);
+    rad.classList.remove('drar');
+    rad.style.transform = '';
+    document.documentElement.style.overflowAnchor = '';
+    ordnar = [...lista.children].map((r) => r.dataset.id);
+    dras = false;
+  };
+  rad.addEventListener('pointermove', ror);
+  rad.addEventListener('pointerup', slut);
+  rad.addEventListener('pointercancel', slut);
+}
+
+function renderOrdning() {
+  $('ordning').textContent = ordnar ? 'Spara ordning' : 'Ändra ordning';
+  $('ordning').classList.toggle('aktiv', Boolean(ordnar));
+  $('ordning-avbryt').hidden = !ordnar;
+  $('grenar-hjalp').textContent = ordnar ? 'Dra i ≡ för att flytta' : 'Tryck för att starta';
+}
+
+function avslutaOrdna() {
+  ordnar = null;
+  renderOrdning();
+  renderGrenar();
+}
+
+async function sparaOrdning() {
+  const oforandrad = ordnar.length === config.grenar.length && ordnar.every((id, i) => config.grenar[i].id === id);
+  if (oforandrad) {
+    avslutaOrdna();
+    return;
+  }
+  const pin = pinKod || await fragaPin();
+  if (!pin) return;
+  $('ordning').disabled = true;
+  $('ordning').textContent = 'Sparar…';
+  try {
+    const lista = await grenar.sortera(pin, ordnar);
+    pinKod = pin;
+    ordnar = null;
+    tillampaGrenar(lista);
+    visaBanner('Ny ordning sparad.');
+  } catch (fel) {
+    if (fel.felPin) pinKod = '';
+    visaBanner(fel.message);
+  } finally {
+    $('ordning').disabled = false;
+    renderOrdning();
+  }
+}
+
+function initOrdning() {
+  if (!grenar.arKonfigurerad()) return;
+  $('ordning-knappar').hidden = false;
+  $('ordning').addEventListener('click', () => {
+    if (!ordnar) {
+      ordnar = config.grenar.map((g) => g.id);
+      renderOrdning();
+      renderGrenar();
+    } else if (!dras) {
+      sparaOrdning();
+    }
+  });
+  $('ordning-avbryt').addEventListener('click', avslutaOrdna);
 }
 
 // --- Aktiv gren ---
@@ -859,7 +1021,7 @@ async function init() {
     return;
   }
   grundGrenar = config.grenar;
-  latar.konfigurera({ url: config.supabaseUrl, key: config.supabaseKey });
+  grenar.konfigurera({ url: config.supabaseUrl, key: config.supabaseKey });
 
   aktuellGren = lasLagrat(AKTUELL_KEY, null);
   try {
@@ -877,14 +1039,15 @@ async function init() {
 
   renderDucking();
   renderEffekter();
-  if (latar.arKonfigurerad()) tillampaLatar(latar.cachade());
+  if (grenar.arKonfigurerad()) tillampaGrenar(grenar.cachade());
   else render();
 
   initStart();
   initGrenvy();
-  initBytLat();
-  hamtaLatar();
-  window.addEventListener('online', hamtaLatar);
+  initRedigera();
+  initOrdning();
+  hamtaGrenar();
+  window.addEventListener('online', hamtaGrenar);
   laddaKlipp();
   window.addEventListener('online', renderStart);
   window.addEventListener('offline', renderStart);
