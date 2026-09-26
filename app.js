@@ -350,6 +350,11 @@ function sattTidVal(prefix, ms, { maxMin, steg = 1 }) {
 
 const lasTidVal = (prefix) => (Number($(`${prefix}-min`).value) * 60 + Number($(`${prefix}-sek`).value)) * 1000;
 
+// Timerns standardtid behövs bara för nedräkning.
+function visaTimerFalt() {
+  $('rg-timer-falt').hidden = $('rg-tidtagning').value === 'stoppur';
+}
+
 function oppnaRedigera() {
   const gren = hittaGren(aktivGren);
   $('rg-rubrik').textContent = `Redigera – ${gren.namn}`;
@@ -362,6 +367,8 @@ function oppnaRedigera() {
   $('rg-artist').value = gren.artist ?? '';
   sattTidVal('rg-start', gren.startMs ?? 0, { maxMin: 15 });
   sattTidVal('rg-timer', timerSekunder(gren) * 1000, { maxMin: 10, steg: 5 });
+  $('rg-tidtagning').value = arStoppur(gren) ? 'stoppur' : 'nedrakning';
+  visaTimerFalt();
   $('rg-pin').value = '';
   $('rg-pin-falt').hidden = Boolean(pinKod);
   sattLankInfo('Spotify → Dela → Kopiera länk');
@@ -412,7 +419,8 @@ async function sparaRedigering() {
     visaRedigeraFel('Klistra in en länk till en Spotify-låt.');
     return;
   }
-  if (timerMs < 15000 || timerMs > 600000) {
+  const tidtagning = $('rg-tidtagning').value;
+  if (tidtagning === 'nedrakning' && (timerMs < 15000 || timerMs > 600000)) {
     visaRedigeraFel('Timern måste vara mellan 0:15 och 10:00.');
     return;
   }
@@ -436,12 +444,13 @@ async function sparaRedigering() {
       lat: $('rg-lat').value.trim(),
       artist: $('rg-artist').value.trim(),
       startMs,
-      timerSekunder: timerMs / 1000,
+      tidtagning,
+      timerSekunder: Math.min(600, Math.max(15, timerMs / 1000)),
     });
     pinKod = pin;
     tillampaGrenar(lista);
-    // Visa den nya tiden direkt om grenens timer inte har startats.
-    if (timer.gren === gren.id && timer.slut == null && timer.kvar === timer.total) aterstallTimer(gren.id);
+    // Visa ny tid och nytt läge direkt om grenens timer inte har startats.
+    if (timer.gren === gren.id && timer.slut == null && timerOrord()) aterstallTimer(gren.id);
     $('redigera').close();
     visaBanner(`${namn} är sparad.`);
   } catch (fel) {
@@ -461,6 +470,7 @@ function initRedigera() {
   $('g-redigera').hidden = false;
   $('g-redigera').addEventListener('click', oppnaRedigera);
   $('rg-lank').addEventListener('input', lankAndrad);
+  $('rg-tidtagning').addEventListener('change', visaTimerFalt);
   $('rg-avbryt').addEventListener('click', () => $('redigera').close());
   $('rg-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -709,11 +719,14 @@ function tillNastaGren() {
 
 // --- Timer ---
 
-const timer = { gren: null, total: 60000, kvar: 60000, slut: null, intervall: null };
+// Nedräkning (standard) eller tidtagning (stoppur, t.ex. slalom). Stoppurstiden sparas inte.
+const timer = { gren: null, lage: 'nedrakning', total: 60000, kvar: 60000, forflutet: 0, slut: null, intervall: null };
 
 function timerSekunder(gren) {
   return gren?.timerSekunder ?? config.timerSekunder ?? 60;
 }
+
+const arStoppur = (gren) => gren?.tidtagning === 'stoppur';
 
 function timerEffekt(gren, nyckel, reserv) {
   return gren?.[nyckel] ?? config[nyckel] ?? reserv;
@@ -725,15 +738,25 @@ function spelaEffekt(id) {
 
 function aterstallTimer(id = timer.gren) {
   stoppaTimer();
+  const gren = hittaGren(id);
   timer.gren = id;
-  timer.total = timerSekunder(hittaGren(id)) * 1000;
+  timer.lage = arStoppur(gren) ? 'stoppur' : 'nedrakning';
+  timer.total = timerSekunder(gren) * 1000;
   timer.kvar = timer.total;
+  timer.forflutet = 0;
   $('t-tid').classList.remove('slut');
   renderTimer();
 }
 
+// Orörd: inte startad sedan senaste återställning.
+const timerOrord = () => (timer.lage === 'stoppur' ? timer.forflutet === 0 : timer.kvar === timer.total);
+
+// I nedräkning är timer.slut sluttiden, i stoppur starttiden (båda från performance.now()).
 function stoppaTimer() {
-  if (timer.slut != null) timer.kvar = Math.max(0, timer.slut - performance.now());
+  if (timer.slut != null) {
+    if (timer.lage === 'stoppur') timer.forflutet = performance.now() - timer.slut;
+    else timer.kvar = Math.max(0, timer.slut - performance.now());
+  }
   timer.slut = null;
   clearInterval(timer.intervall);
   timer.intervall = null;
@@ -742,6 +765,15 @@ function stoppaTimer() {
 function vaxlaTimer() {
   if (timer.slut != null) {
     stoppaTimer();
+    // Stoppuret blåser av med samma ljud som vid start (visselpipan).
+    if (timer.lage === 'stoppur') spelaEffekt(timerEffekt(hittaGren(timer.gren), 'timerStartEffekt', 'startskott'));
+    renderTimer();
+    return;
+  }
+  if (timer.lage === 'stoppur') {
+    if (timer.forflutet === 0) spelaEffekt(timerEffekt(hittaGren(timer.gren), 'timerStartEffekt', 'startskott'));
+    timer.slut = performance.now() - timer.forflutet;
+    timer.intervall = setInterval(tickaTimer, 50);
     renderTimer();
     return;
   }
@@ -755,34 +787,58 @@ function vaxlaTimer() {
 }
 
 function tickaTimer() {
-  timer.kvar = Math.max(0, timer.slut - performance.now());
-  if (timer.kvar === 0) {
-    stoppaTimer();
-    spelaEffekt(timerEffekt(hittaGren(timer.gren), 'timerSlutEffekt', 'gong'));
-    if (aktivGren === timer.gren) $('t-tid').classList.add('slut');
+  if (timer.lage === 'stoppur') {
+    // Stoppuret stannar vid 99:59,9 så att visningen inte slår runt.
+    timer.forflutet = Math.min(STOPPUR_MAX_MS, performance.now() - timer.slut);
+    if (timer.forflutet === STOPPUR_MAX_MS) stoppaTimer();
+  } else {
+    timer.kvar = Math.max(0, timer.slut - performance.now());
+    if (timer.kvar === 0) {
+      stoppaTimer();
+      spelaEffekt(timerEffekt(hittaGren(timer.gren), 'timerSlutEffekt', 'gong'));
+      if (aktivGren === timer.gren) $('t-tid').classList.add('slut');
+    }
   }
   if (aktivGren === timer.gren) renderTimer();
 }
 
+const STOPPUR_MAX_MS = 5999900;
+
 function justeraTimer(sekunder) {
-  if (timer.slut != null || timer.kvar !== timer.total) return;
+  if (timer.lage === 'stoppur' || timer.slut != null || !timerOrord()) return;
   timer.total = Math.min(600000, Math.max(15000, timer.total + sekunder * 1000));
   timer.kvar = timer.total;
   renderTimer();
 }
 
+const tvaSiffror = (n) => String(n).padStart(2, '0');
+
 function renderTimer() {
-  const sek = Math.ceil(timer.kvar / 1000);
-  const tid = $('t-tid');
-  tid.textContent = `${String(Math.floor(sek / 60)).padStart(2, '0')}:${String(sek % 60).padStart(2, '0')}`;
-  tid.classList.toggle('kort', timer.slut != null && sek <= 10);
+  const stoppur = timer.lage === 'stoppur';
   const gar = timer.slut != null;
-  const orord = timer.kvar === timer.total;
+  const orord = timerOrord();
+  const tid = $('t-tid');
+  if (stoppur) {
+    const tiondelar = Math.floor(timer.forflutet / 100);
+    const sek = Math.floor(tiondelar / 10);
+    tid.textContent = `${tvaSiffror(Math.floor(sek / 60))}:${tvaSiffror(sek % 60)},${tiondelar % 10}`;
+    tid.classList.remove('kort');
+  } else {
+    const sek = Math.ceil(timer.kvar / 1000);
+    tid.textContent = `${tvaSiffror(Math.floor(sek / 60))}:${tvaSiffror(sek % 60)}`;
+    tid.classList.toggle('kort', gar && sek <= 10);
+  }
+  tid.classList.toggle('stoppur', stoppur);
+  $('t-rubrik').textContent = stoppur ? 'Tidtagning' : 'Nedräkning';
+  $('timer-kort').setAttribute('aria-label', stoppur ? 'Tidtagning' : 'Timer');
   const start = $('t-start');
-  start.textContent = gar ? 'Pausa' : (orord || timer.kvar === 0 ? 'Starta' : 'Fortsätt');
+  if (stoppur) start.textContent = gar ? 'Stoppa' : (orord ? 'Starta' : 'Fortsätt');
+  else start.textContent = gar ? 'Pausa' : (orord || timer.kvar === 0 ? 'Starta' : 'Fortsätt');
   start.classList.toggle('pausad', gar);
-  $('t-minus').disabled = gar || !orord;
-  $('t-plus').disabled = gar || !orord;
+  for (const id of ['t-minus', 't-plus']) {
+    $(id).disabled = stoppur || gar || !orord;
+    $(id).classList.toggle('dold', stoppur);
+  }
 }
 
 function initGrenvy() {

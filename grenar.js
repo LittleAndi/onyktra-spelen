@@ -3,7 +3,7 @@
 const CACHE_KEY = 'os.grenar';
 const GAMMAL_CACHE_KEY = 'os.latar';
 const TIMEOUT_MS = 8000;
-const KOLUMNER = 'id,ordning,namn,sasong,beskrivning,mening,spotify_uri,lat,artist,start_ms,timer_sekunder';
+const KOLUMNER = 'id,ordning,namn,sasong,beskrivning,mening,spotify_uri,lat,artist,start_ms,timer_sekunder,tidtagning';
 
 let bas = null;
 let nyckel = null;
@@ -30,6 +30,7 @@ function tillGren(rad) {
     startMs: rad.start_ms ?? 0,
   };
   if (rad.timer_sekunder != null) gren.timerSekunder = rad.timer_sekunder;
+  if (rad.tidtagning) gren.tidtagning = rad.tidtagning;
   return gren;
 }
 
@@ -71,7 +72,15 @@ async function anrop(sokvag, kropp) {
 }
 
 export async function hamta() {
-  const rader = await anrop(`grenar?select=${KOLUMNER}&order=ordning,id`);
+  let rader;
+  try {
+    rader = await anrop(`grenar?select=${KOLUMNER}&order=ordning,id`);
+  } catch (fel) {
+    // 42703: kolumnen tidtagning saknas – supabase.sql har inte körts om sedan den lades till.
+    if (fel.kod !== '42703') throw fel;
+    console.warn('Kolumnen tidtagning saknas i Supabase – kör docs/supabase.sql igen.');
+    rader = await anrop(`grenar?select=${KOLUMNER.replace(',tidtagning', '')}&order=ordning,id`);
+  }
   sparaCache(rader);
   return rader.map(tillGren);
 }
@@ -102,6 +111,7 @@ export function spara(pin, gren) {
       artist: gren.artist || null,
       start_ms: gren.startMs ?? 0,
       timer_sekunder: gren.timerSekunder ?? null,
+      tidtagning: gren.tidtagning || 'nedrakning',
     },
   });
 }

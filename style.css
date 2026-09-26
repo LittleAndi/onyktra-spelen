@@ -316,6 +316,12 @@ h2 {
   letter-spacing: .02em; font-variant-numeric: tabular-nums;
 }
 .timer.kort { color: var(--warn); }
+.timer.stoppur { font-size: 60px; }
+.timer-rad .icon-btn.dold { display: none; }
+.timer-etikett {
+  text-align: center; font-size: 12px; color: var(--muted);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: -8px;
+}
 .timer.slut { color: var(--warn); animation: blink 1s steps(2, start) 3; }
 @keyframes blink { to { visibility: hidden; } }
 

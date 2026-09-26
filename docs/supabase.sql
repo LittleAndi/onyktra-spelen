@@ -25,8 +25,13 @@ create table if not exists public.grenar (
   artist        text,
   start_ms      integer not null default 0 check (start_ms >= 0),
   timer_sekunder integer check (timer_sekunder between 15 and 600),
+  tidtagning    text check (tidtagning in ('nedrakning', 'stoppur')), -- null = nedräkning
   uppdaterad    timestamptz not null default now()
 );
+
+-- Kolumnen tidtagning läggs till i tabeller skapade av äldre versioner.
+alter table public.grenar add column if not exists tidtagning text
+  check (tidtagning in ('nedrakning', 'stoppur'));
 
 alter table public.grenar enable row level security;
 revoke all on public.grenar from anon, authenticated;
@@ -46,6 +51,10 @@ insert into public.grenar (id, ordning, namn, sasong, beskrivning, mening, spoti
   ('slalom', 6, 'Slalom', 'vinter', 'Shot-slalom med shots och godis', null, 'spotify:track:1V4jC0vJ5525lEF1bFgPX2', 'Shots', 'LMFAO', 0),
   ('hasthoppning', 7, 'Hästhoppning', 'sommar', 'Käpphäst, tre hinder', null, 'spotify:track:3j01GIGm0LYSzbO7X0NfYM', 'Wilhelm Tell-uvertyren', 'Rossini', 0)
 on conflict (id) do nothing;
+
+-- Slalom och hästhoppning tar tid (stoppur) om inget annat valts i appen.
+update public.grenar set tidtagning = 'stoppur'
+where id in ('slalom', 'hasthoppning') and tidtagning is null;
 
 -- Flytta över låtbyten från den gamla tabellen latar (tidigare version av appen) och ta bort den.
 do $$
@@ -92,7 +101,7 @@ as $$
 begin
   perform public.kontrollera_pin(pin);
   insert into public.grenar as g
-    (id, ordning, namn, sasong, beskrivning, mening, spotify_uri, lat, artist, start_ms, timer_sekunder, uppdaterad)
+    (id, ordning, namn, sasong, beskrivning, mening, spotify_uri, lat, artist, start_ms, timer_sekunder, tidtagning, uppdaterad)
   values (
     gren->>'id',
     (select coalesce(max(ordning), 0) + 1 from public.grenar),
@@ -105,6 +114,7 @@ begin
     nullif(gren->>'artist', ''),
     coalesce((gren->>'start_ms')::integer, 0),
     (gren->>'timer_sekunder')::integer,
+    nullif(gren->>'tidtagning', ''),
     now()
   )
   on conflict (id) do update set
@@ -117,6 +127,7 @@ begin
     artist         = excluded.artist,
     start_ms       = excluded.start_ms,
     timer_sekunder = excluded.timer_sekunder,
+    tidtagning     = excluded.tidtagning,
     uppdaterad     = now();
 end;
 $$;

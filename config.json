@@ -68,7 +68,8 @@
       "lat": "Shots",
       "artist": "LMFAO",
       "spotifyUri": "spotify:track:1V4jC0vJ5525lEF1bFgPX2",
-      "startMs": 0
+      "startMs": 0,
+      "tidtagning": "stoppur"
     },
     {
       "id": "hasthoppning",
@@ -78,7 +79,8 @@
       "lat": "Wilhelm Tell-uvertyren",
       "artist": "Rossini",
       "spotifyUri": "spotify:track:3j01GIGm0LYSzbO7X0NfYM",
-      "startMs": 0
+      "startMs": 0,
+      "tidtagning": "stoppur"
     }
   ],
   "effekter": [

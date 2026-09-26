@@ -129,7 +129,8 @@
     <div id="g-mening"></div>
   </div>
 
-  <section class="card timer-kort" aria-label="Timer">
+  <section class="card timer-kort" id="timer-kort" aria-label="Timer">
+    <div class="timer-etikett" id="t-rubrik">Nedräkning</div>
     <div class="timer-rad">
       <button class="icon-btn" type="button" id="t-minus" aria-label="15 sekunder kortare">−15</button>
       <div class="timer" id="t-tid" role="timer" aria-live="off">01:00</div>
@@ -215,6 +216,14 @@
       </div>
     </div>
     <div class="falt">
+      <label for="rg-tidtagning">Tid</label>
+      <select id="rg-tidtagning">
+        <option value="nedrakning">Nedräkning (timer)</option>
+        <option value="stoppur">Tidtagning (stoppur)</option>
+      </select>
+      <small>Tidtagning mäter hur lång tid ett lopp tar, t.ex. slalom. Tiden sparas inte.</small>
+    </div>
+    <div class="falt" id="rg-timer-falt">
       <label for="rg-timer-min">Timer</label>
       <div class="tidval">
         <select id="rg-timer-min" aria-label="Timer, minuter"></select>
