@@ -348,6 +348,7 @@ function oppnaRedigera() {
   $('rg-lat').value = gren.lat ?? '';
   $('rg-artist').value = gren.artist ?? '';
   $('rg-start').value = formateraTid(gren.startMs ?? 0);
+  $('rg-timer').value = formateraTid(timerSekunder(gren) * 1000);
   $('rg-pin').value = '';
   $('rg-pin-falt').hidden = Boolean(pinKod);
   sattLankInfo('Spotify → Dela → Kopiera länk');
@@ -389,6 +390,7 @@ async function sparaRedigering() {
   const lank = $('rg-lank').value.trim();
   const uri = lank ? grenar.tolkaSpotifyLank(lank) : gren.spotifyUri;
   const startMs = tolkaTid($('rg-start').value);
+  const timerMs = tolkaTid($('rg-timer').value);
   if (!namn) {
     visaRedigeraFel('Grenen måste ha ett namn.');
     return;
@@ -399,6 +401,10 @@ async function sparaRedigering() {
   }
   if (startMs == null) {
     visaRedigeraFel('Skriv starttiden som m:ss, t.ex. 0:42.');
+    return;
+  }
+  if (timerMs == null || timerMs < 15000 || timerMs > 600000) {
+    visaRedigeraFel('Skriv timern som m:ss, mellan 0:15 och 10:00.');
     return;
   }
   const pin = pinKod || $('rg-pin').value.trim();
@@ -421,9 +427,12 @@ async function sparaRedigering() {
       lat: $('rg-lat').value.trim(),
       artist: $('rg-artist').value.trim(),
       startMs,
+      timerSekunder: timerMs / 1000,
     });
     pinKod = pin;
     tillampaGrenar(lista);
+    // Visa den nya tiden direkt om grenens timer inte har startats.
+    if (timer.gren === gren.id && timer.slut == null && timer.kvar === timer.total) aterstallTimer(gren.id);
     $('redigera').close();
     visaBanner(`${namn} är sparad.`);
   } catch (fel) {

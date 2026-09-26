@@ -336,16 +336,21 @@ async function ateranslut() {
 
 export const arAnsluten = () => deviceId != null;
 
-// Spelar listan av låtar med början på index, från startMs.
+// Spelar listan av låtar med början på index, från startMs. Låten upprepas tills man byter.
 export async function spela(uris, { index = 0, startMs = 0 } = {}) {
   const kropp = { uris, offset: { position: index }, position_ms: startMs };
-  const id = deviceId ?? await ateranslut();
+  let id = deviceId ?? await ateranslut();
   try {
     await api('PUT', `/me/player/play?device_id=${encodeURIComponent(id)}`, kropp);
   } catch (fel) {
     if (fel.status !== 404) throw fel;
-    const nyttId = await ateranslut();
-    await api('PUT', `/me/player/play?device_id=${encodeURIComponent(nyttId)}`, kropp);
+    id = await ateranslut();
+    await api('PUT', `/me/player/play?device_id=${encodeURIComponent(id)}`, kropp);
+  }
+  try {
+    await api('PUT', `/me/player/repeat?state=track&device_id=${encodeURIComponent(id)}`);
+  } catch (fel) {
+    console.warn('Kunde inte slå på upprepning:', fel);
   }
 }
 
