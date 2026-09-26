@@ -214,6 +214,12 @@ export function hamtaProfil() {
   return api('GET', '/me');
 }
 
+// Låtnamn och artist för en track-URI.
+export async function hamtaLat(uri) {
+  const lat = await api('GET', `/tracks/${encodeURIComponent(uri.split(':').pop())}`);
+  return { lat: lat.name, artist: lat.artists?.map((a) => a.name).join(', ') ?? '' };
+}
+
 // --- Web Playback SDK ---
 
 function laddaSdk() {

@@ -1,6 +1,8 @@
 {
   "spotifyClientId": "DIN_CLIENT_ID",
   "redirectUri": "https://littleandi.github.io/onyktra-spelen/",
+  "supabaseUrl": "https://DITT_PROJEKT.supabase.co",
+  "supabaseKey": "DIN_PUBLISHABLE_KEY",
   "duckLevel": 0.3,
   "klippVolym": 1,
   "timerSekunder": 60,
