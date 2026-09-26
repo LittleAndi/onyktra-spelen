@@ -178,7 +178,10 @@ h2 {
   padding: 12px; text-align: left;
   transition: transform .08s, border-color .15s;
 }
-.pad:active, .pad.tryckt { transform: scale(.97); border-color: var(--accent); }
+.pad:active { transform: scale(.97); border-color: var(--accent); }
+.pad.spelar { border-color: var(--accent); background: var(--active); }
+.pad.saknas { opacity: .45; }
+.pad.saknas .psub::after { content: ' · saknas'; }
 .dot { width: 8px; height: 8px; border-radius: 4px; display: inline-block; flex-shrink: 0; }
 .dot.guld { background: var(--accent); }
 .dot.is { background: var(--ice); }

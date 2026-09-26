@@ -2,6 +2,7 @@
   "spotifyClientId": "DIN_CLIENT_ID",
   "redirectUri": "https://littleandi.github.io/onyktra-spelen/",
   "duckLevel": 0.3,
+  "klippVolym": 1,
   "timerSekunder": 60,
   "grenar": [
     {
@@ -13,7 +14,7 @@
       "artist": "The Fratellis",
       "spotifyUri": "spotify:track:52fnLN02thRhTnbzVZzdqq",
       "startMs": 0,
-      "effekter": ["mallur", "startskott"]
+      "effekter": ["visselpipa", "jubel", "charge"]
     },
     {
       "id": "curling",
@@ -24,7 +25,7 @@
       "artist": "Strauss",
       "spotifyUri": "spotify:track:2NOyTijV4TGvH6zIntBIYI",
       "startMs": 0,
-      "effekter": ["startskott", "jubel"]
+      "effekter": ["visselpipa", "jubel"]
     },
     {
       "id": "boxning",
@@ -47,7 +48,7 @@
       "artist": "The White Stripes",
       "spotifyUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
       "startMs": 0,
-      "effekter": ["mallur", "jubel"]
+      "effekter": ["visselpipa", "jubel"]
     },
     {
       "id": "basket",
@@ -58,7 +59,7 @@
       "artist": "Van Halen",
       "spotifyUri": "spotify:track:7N3PAbqfTjSEU1edb2tY8j",
       "startMs": 0,
-      "effekter": ["jubel", "buu"]
+      "effekter": ["jubel", "buu", "charge"]
     },
     {
       "id": "slalom",
@@ -69,7 +70,7 @@
       "artist": "LMFAO",
       "spotifyUri": "spotify:track:1V4jC0vJ5525lEF1bFgPX2",
       "startMs": 0,
-      "effekter": ["startskott", "jubel"]
+      "effekter": ["visselpipa", "jubel"]
     },
     {
       "id": "hasthoppning",
@@ -80,51 +81,58 @@
       "artist": "Rossini",
       "spotifyUri": "spotify:track:3j01GIGm0LYSzbO7X0NfYM",
       "startMs": 0,
-      "effekter": ["startskott", "buu", "jubel"]
+      "effekter": ["visselpipa", "buu", "jubel"]
     }
   ],
   "effekter": [
     {
-      "id": "mallur",
-      "namn": "Mållur",
-      "beskrivning": "Hockey & fotboll",
-      "farg": "guld",
-      "fil": "clips/mallur.mp3"
+      "id": "visselpipa",
+      "namn": "Visselpipa",
+      "beskrivning": "Start & stopp",
+      "farg": "is",
+      "fil": "clips/218318-splicesound-referee-whistle-blow-gymnasium.mp3"
     },
     {
       "id": "gong",
       "namn": "Gong",
-      "beskrivning": "Boxning",
+      "beskrivning": "Tiden ute",
       "farg": "guld",
-      "fil": "clips/gong.mp3"
-    },
-    {
-      "id": "startskott",
-      "namn": "Startskott",
-      "beskrivning": "Alla grenar",
-      "farg": "is",
-      "fil": "clips/startskott.mp3"
-    },
-    {
-      "id": "jubel",
-      "namn": "Jubel",
-      "beskrivning": "Vinnare",
-      "farg": "is",
-      "fil": "clips/jubel.mp3"
+      "fil": "clips/457662-diarchangeli-gong.mp3"
     },
     {
       "id": "trumvirvel",
       "namn": "Trumvirvel",
       "beskrivning": "Inför resultat",
       "farg": "is",
-      "fil": "clips/trumvirvel.mp3"
+      "fil": "clips/191718-adriann-drumroll.mp3"
+    },
+    {
+      "id": "jubel",
+      "namn": "Jubel",
+      "beskrivning": "Vinnare",
+      "farg": "is",
+      "fil": "clips/462362-breviceps-small-applause.mp3"
+    },
+    {
+      "id": "charge",
+      "namn": "Charge!",
+      "beskrivning": "Peppa publiken",
+      "farg": "guld",
+      "fil": "clips/charge.mp3"
+    },
+    {
+      "id": "letsgo",
+      "namn": "Let's go Thomas",
+      "beskrivning": "Heja jubilaren",
+      "farg": "guld",
+      "fil": "clips/letsgo-thomas.mp3"
     },
     {
       "id": "buu",
       "namn": "Buu",
       "beskrivning": "Miss",
       "farg": "varning",
-      "fil": "clips/buu.mp3"
+      "fil": "clips/619047-mrrap4food-crowd-booing-3.mp3"
     }
   ]
 }
