@@ -21,12 +21,17 @@ Kör hela `docs/supabase.sql` igen – du behöver inte ändra något i den. Skr
 
 Skriptet går att köra igen när som helst utan att ändringar gjorda i appen skrivs över.
 
+## Uppgradera: tidtagning (stoppur)
+
+Kör hela `docs/supabase.sql` igen. Kolumnen `tidtagning` läggs till och slalom och hästhoppning får stoppur. Tills skriptet körts fungerar appen som förut (bara nedräkning).
+
 ## Redigera en gren
 
 1. Öppna grenen och tryck **Redigera gren** under musikkortet.
 2. Ändra namn, säsong, beskrivning eller **meningen** (visas stort i grenvyn – lämna tomt om grenen inte har någon).
 3. Byt låt: i Spotify **Dela → Kopiera länk**, klistra in länken. Låtnamn och artist hämtas automatiskt (går att ändra). Ange eventuellt var låten ska börja (m:ss).
-4. Ange PIN-koden första gången och tryck **Spara**. Appen kommer ihåg koden tills sidan laddas om – den sparas aldrig på telefonen.
+4. Välj **Tid**: *Nedräkning* (timer med standardtid) eller *Tidtagning* (stoppur, t.ex. slalom och hästhoppning).
+5. Ange PIN-koden första gången och tryck **Spara**. Appen kommer ihåg koden tills sidan laddas om – den sparas aldrig på telefonen.
 
 ## Ändra ordning
 

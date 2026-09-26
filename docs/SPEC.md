@@ -87,7 +87,7 @@ Konfiguration i en JSON-fil (`config.json`) så att låtar och klipp kan ändras
 
 `startMs` låter en låt starta direkt på refrängen/det kända partiet (skickas som `position_ms`).
 
-När Supabase är konfigurerat (`supabaseUrl`, `supabaseKey` i `config.json`) hämtas grenarna från tabellen `grenar` i Supabase i stället, och `config.json` används bara tills de hämtats första gången. I appen kan man då redigera en gren (grenvyn → **Redigera gren**: namn, säsong, beskrivning, meningen, låt via Spotify-länk, starttid och timerns standardtid) och ändra grenarnas ordning genom att dra dem på översikten (**Ändra ordning**). Alla ändringar kräver samma PIN-kod. Se `docs/SUPABASE.md`.
+När Supabase är konfigurerat (`supabaseUrl`, `supabaseKey` i `config.json`) hämtas grenarna från tabellen `grenar` i Supabase i stället, och `config.json` används bara tills de hämtats första gången. I appen kan man då redigera en gren (grenvyn → **Redigera gren**: namn, säsong, beskrivning, meningen, låt via Spotify-länk, starttid, nedräkning eller tidtagning och timerns standardtid) och ändra grenarnas ordning genom att dra dem på översikten (**Ändra ordning**). Alla ändringar kräver samma PIN-kod. Se `docs/SUPABASE.md`.
 
 ### Förvalda låtar
 
@@ -123,6 +123,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 - Stort grennamn, regeltext, ev. meningen (boxning) i stor text så den kan läsas upp.
 - **Timer**: valfri nedräkning (standard 60 s), Start/Återställ; spelar "startskott" vid start och "gong" vid 0 (konfigurerbart).
   Konfigureras med `timerSekunder`, `timerStartEffekt` och `timerSlutEffekt` i `config.json` (globalt eller per gren). Tiden kan justeras ±15 s innan start.
+- **Tidtagning**: grenar med `"tidtagning": "stoppur"` (t.ex. slalom och hästhoppning) får ett stoppur i stället för nedräkning: Starta (spelar startljudet) / Stoppa / Fortsätt / Återställ, visar mm:ss,t. Tiden sparas inte. Väljs per gren i config.json eller under Redigera gren.
 - Musikkort: play/paus, "Tona ut" (fade till 0 på 3 s, sedan paus).
 - Alla effektknappar, samma uppsättning och ordning som i översikten.
 - "Nästa gren" (på sista grenen: tillbaka till översikten).
