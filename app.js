@@ -1,6 +1,7 @@
 // UI och state för Onyktra Spelen.
 
 import * as spotify from './spotify.js';
+import * as ljud from './audio.js';
 
 const STATUS_KEY = 'os.grenstatus';
 const DUCKING_KEY = 'os.ducking';
@@ -18,7 +19,8 @@ const $ = (id) => document.getElementById(id);
 let config;
 let status = {};
 let spelarStatus = null;
-let ljudkontext = null;
+let klippStatus = null; // { laddade, totalt, fel } när förladdningen är klar
+let duckad = false;
 let bannerTimer;
 
 function el(tag, attrs = {}, ...children) {
@@ -162,7 +164,7 @@ function sattTransport(pa) {
 }
 
 function renderDucking() {
-  const pa = lasLagrat(DUCKING_KEY, true);
+  const pa = duckingPa();
   const niva = Math.round((config.duckLevel ?? 0.3) * 100);
   $('ducking').setAttribute('aria-pressed', String(pa));
   $('ducking-text').textContent = `Sänk vid klipp · ${pa ? niva + '%' : 'av'}`;
@@ -195,15 +197,68 @@ function renderEffekter() {
         effekt.beskrivning ? el('span', { class: 'psub' }, effekt.beskrivning) : null,
       ),
     );
-    // Ljud kopplas in i audio.js; tills dess bara visuell återkoppling.
+    let spelar = 0;
     knapp.addEventListener('click', () => {
-      knapp.classList.add('tryckt');
-      setTimeout(() => knapp.classList.remove('tryckt'), 150);
+      const startat = ljud.spela(effekt.id, () => {
+        spelar -= 1;
+        knapp.classList.toggle('spelar', spelar > 0);
+      });
+      if (!startat) {
+        visaBanner(`Klippet ${effekt.namn} är inte laddat.`);
+        return;
+      }
+      spelar += 1;
+      knapp.classList.add('spelar');
     });
     return knapp;
   });
   $('effekter').replaceChildren(...knappar);
+  renderEffektStatus();
 }
+
+// Knappar vars klipp inte kunde laddas visas som saknade.
+function renderEffektStatus() {
+  for (const knapp of $('effekter').children) {
+    const saknas = klippStatus != null && !ljud.harKlipp(knapp.dataset.id);
+    knapp.classList.toggle('saknas', saknas);
+    knapp.setAttribute('aria-disabled', String(saknas));
+  }
+}
+
+async function laddaKlipp() {
+  sattRad('start-klipp', `Laddar 0/${config.effekter.length}…`);
+  try {
+    ljud.sattKlippVolym(config.klippVolym ?? 1);
+    klippStatus = await ljud.forladda(config.effekter, ({ laddade, totalt }) =>
+      sattRad('start-klipp', `Laddar ${laddade}/${totalt}…`));
+  } catch (fel) {
+    console.error(fel);
+    klippStatus = { laddade: 0, totalt: config.effekter.length, fel: new Map() };
+    sattRad('start-klipp', fel.message, 'fel-text');
+    renderEffektStatus();
+    return;
+  }
+  const { laddade, totalt, fel } = klippStatus;
+  for (const [id, orsak] of fel) console.warn(`Klipp ${id}: ${orsak}`);
+  sattRad('start-klipp', `${laddade}/${totalt}${laddade === totalt ? ' ✓' : ' – ' + [...fel.keys()].join(', ') + ' saknas'}`,
+    laddade === totalt ? 'ok' : 'fel-text');
+  renderEffektStatus();
+}
+
+// --- Ducking: sänk Spotify medan minst ett klipp spelar ---
+
+const duckingPa = () => lasLagrat(DUCKING_KEY, true);
+
+function uppdateraDucking() {
+  const sank = duckad && duckingPa();
+  // Snabbt ned när klippet börjar, mjukt upp (ca 300 ms) när det slutat.
+  spotify.tonaVolym(sank ? (config.duckLevel ?? 0.3) : 1, sank ? 0 : 300);
+}
+
+ljud.sattDuckingLyssnare((aktiv) => {
+  duckad = aktiv;
+  uppdateraDucking();
+});
 
 function render() {
   renderRaknare();
@@ -304,12 +359,7 @@ async function loggaIn() {
 // Körs i användarens tryck: låser upp ljud (iOS) och ansluter Spotify-spelaren.
 async function startaAppen() {
   spotify.aktivera();
-  try {
-    ljudkontext ??= new AudioContext();
-    ljudkontext.resume();
-  } catch {
-    // Web Audio saknas – klippen kopplas in i audio.js.
-  }
+  ljud.lasUpp().catch((fel) => console.warn('Kunde inte låsa upp ljud:', fel));
 
   visaStartFel(null);
   $('starta').disabled = true;
@@ -338,7 +388,10 @@ function initStart() {
   $('klientid').addEventListener('input', (e) => sparaLagrat(KLIENTID_KEY, e.target.value.trim()));
   $('logga-in').addEventListener('click', loggaIn);
   $('starta').addEventListener('click', startaAppen);
-  $('utan-spotify').addEventListener('click', () => visaVy('oversikt'));
+  $('utan-spotify').addEventListener('click', () => {
+    ljud.lasUpp().catch((fel) => console.warn('Kunde inte låsa upp ljud:', fel));
+    visaVy('oversikt');
+  });
   $('logga-ut').addEventListener('click', () => {
     spotify.loggaUt();
     sattTransport(false);
@@ -383,8 +436,9 @@ async function init() {
   status = lasLagrat(STATUS_KEY, {});
 
   $('ducking').addEventListener('click', () => {
-    sparaLagrat(DUCKING_KEY, !lasLagrat(DUCKING_KEY, true));
+    sparaLagrat(DUCKING_KEY, !duckingPa());
     renderDucking();
+    if (duckad) uppdateraDucking();
   });
   $('nollstall').addEventListener('click', nollstall);
 
@@ -393,6 +447,7 @@ async function init() {
   render();
 
   initStart();
+  laddaKlipp();
   await initSpotify();
 }
 
