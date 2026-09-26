@@ -24,3 +24,4 @@ Webbapp för att styra musik (Spotify) och ljudeffekter under tävlingsdelen på
 - Arbeta issue för issue (se GitHub Issues). Håll ändringar små och testbara.
 - Varje issue stänger när dess acceptanskriterier i `docs/SPEC.md` är uppfyllda.
 - Testa i mobil vy (Chrome DevTools) och notera vad som måste provas på riktig telefon.
+- Skapa alltid en PR mot `main` efter push.
