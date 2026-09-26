@@ -1,3 +1,23 @@
+/* Typsnitt (SIL Open Font License), självhostade så att de fungerar offline. Latin-delmängd räcker för svenska. */
+@font-face {
+  font-family: 'Big Shoulders Display';
+  src: url('fonts/big-shoulders-display.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('fonts/ibm-plex-sans.woff2') format('woff2');
+  font-weight: 100 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('fonts/ibm-plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+
 :root {
   --bg: #0F1620;
   --surface: #18212D;
@@ -246,6 +266,10 @@ h2 {
   padding: 12px 14px; border-radius: 12px;
   background: var(--surface); border: 1px solid var(--warn); color: var(--text);
   font-size: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / .4);
+}
+.banner-version {
+  min-height: 48px; text-align: left; font-weight: 600;
+  border-color: var(--accent);
 }
 
 /* Aktiv gren */

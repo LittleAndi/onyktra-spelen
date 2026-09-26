@@ -553,16 +553,86 @@ function visaVy(id) {
   window.scrollTo(0, 0);
 }
 
+function startText() {
+  return navigator.onLine ? 'Starta Onyktra Spelen' : 'Starta offline – bara ljudklipp';
+}
+
 function renderStart() {
   const inloggad = spotify.arInloggad();
-  $('klientid-falt').hidden = inloggad || Boolean(config.spotifyClientId && config.spotifyClientId !== 'DIN_CLIENT_ID');
-  $('logga-in').hidden = inloggad;
-  $('starta').hidden = !inloggad;
+  const online = navigator.onLine;
+  $('klientid-falt').hidden = inloggad || !online || Boolean(config.spotifyClientId && config.spotifyClientId !== 'DIN_CLIENT_ID');
+  $('logga-in').hidden = inloggad || !online;
+  $('starta').hidden = !inloggad && online;
+  if (!$('starta').disabled) $('starta').textContent = startText();
   $('logga-ut').hidden = !inloggad;
   if (!inloggad) {
     sattRad('start-konto', 'Ej inloggad');
     sattRad('start-spelare', 'Ej ansluten');
   }
+}
+
+// --- Offline (service worker) ---
+
+function fragaServiceWorker(worker, meddelande) {
+  return new Promise((resolve, reject) => {
+    const kanal = new MessageChannel();
+    kanal.port1.onmessage = (e) => resolve(e.data);
+    worker.postMessage(meddelande, [kanal.port2]);
+    setTimeout(() => reject(new Error('Inget svar från service workern.')), 5000);
+  });
+}
+
+async function renderOfflineStatus() {
+  if (!('serviceWorker' in navigator)) {
+    sattRad('start-offline', 'Stöds inte här', 'fel-text');
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const { redo, cachade, totalt } = await fragaServiceWorker(reg.active, { typ: 'status' });
+    if (redo) sattRad('start-offline', 'Redo ✓', 'ok');
+    else sattRad('start-offline', `${cachade}/${totalt} filer sparade`, 'fel-text');
+  } catch (fel) {
+    console.warn(fel);
+    sattRad('start-offline', 'Okänt', 'fel-text');
+  }
+}
+
+function visaNyVersion(worker) {
+  const knapp = $('ny-version');
+  knapp.hidden = false;
+  knapp.onclick = () => {
+    knapp.disabled = true;
+    worker.postMessage({ typ: 'aktivera' });
+  };
+}
+
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    renderOfflineStatus();
+    return;
+  }
+  const hadeKontroll = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // Första installationen tar över sidan utan omladdning; en ny version laddar om.
+    if (hadeKontroll) location.reload();
+  });
+  try {
+    const reg = await navigator.serviceWorker.register('sw.js');
+    if (reg.waiting && navigator.serviceWorker.controller) visaNyVersion(reg.waiting);
+    reg.addEventListener('updatefound', () => {
+      const ny = reg.installing;
+      ny?.addEventListener('statechange', () => {
+        if (ny.state === 'installed' && navigator.serviceWorker.controller) visaNyVersion(ny);
+        if (ny.state === 'activated' || ny.state === 'redundant') renderOfflineStatus();
+      });
+    });
+  } catch (fel) {
+    console.error(fel);
+    sattRad('start-offline', 'Kunde inte aktiveras', 'fel-text');
+    return;
+  }
+  renderOfflineStatus();
 }
 
 async function visaKonto() {
@@ -606,6 +676,12 @@ async function startaAppen() {
   ljud.lasUpp().catch((fel) => console.warn('Kunde inte låsa upp ljud:', fel));
 
   visaStartFel(null);
+  if (!navigator.onLine) {
+    // Utan nät går Spotify inte att nå – klippen fungerar ändå.
+    sattRad('start-spelare', 'Offline – kräver nät');
+    visaVy('oversikt');
+    return;
+  }
   $('starta').disabled = true;
   $('starta').textContent = 'Startar…';
   sattRad('start-spelare', 'Ansluter…');
@@ -623,7 +699,7 @@ async function startaAppen() {
     if (!spotify.arInloggad()) renderStart();
   } finally {
     $('starta').disabled = false;
-    $('starta').textContent = 'Starta Onyktra Spelen';
+    $('starta').textContent = startText();
   }
 }
 
@@ -655,6 +731,10 @@ async function initSpotify() {
   }
   renderStart();
   if (!spotify.arInloggad()) return;
+  if (!navigator.onLine) {
+    sattRad('start-konto', 'Offline');
+    return;
+  }
   visaKonto();
   // Ladda SDK:t i förväg så att Starta-trycket kan låsa upp ljudet direkt.
   spotify.forberedSpelare({ onStatus: spelarHandelse, onFel: visaBanner })
@@ -665,6 +745,7 @@ async function init() {
   renderNatstatus();
   window.addEventListener('online', renderNatstatus);
   window.addEventListener('offline', renderNatstatus);
+  initServiceWorker();
 
   try {
     config = await laddaConfig();
@@ -692,6 +773,8 @@ async function init() {
   initStart();
   initGrenvy();
   laddaKlipp();
+  window.addEventListener('online', renderStart);
+  window.addEventListener('offline', renderStart);
   await initSpotify();
 }
 

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0F1620"/>
+  <!-- Tvåvägsord: läses "OS" och, vänt ett halvt varv, "50". Glyferna är ritade som "50" och vända 180°. -->
+  <g transform="rotate(180 256 256)">
+    <g transform="translate(106 116)" fill="none" stroke="#E8B04A" stroke-width="46" stroke-linejoin="round" stroke-linecap="butt">
+      <path d="M 124 23 H 76 Q 23 23 23 76 V 124 H 66 Q 124 124 124 182 V 200 Q 124 257 66 257 H 0"/>
+      <rect x="185" y="23" width="92" height="234" rx="46"/>
+    </g>
+  </g>
+</svg>
