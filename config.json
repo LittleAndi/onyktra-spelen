@@ -4,20 +4,127 @@
   "duckLevel": 0.3,
   "timerSekunder": 60,
   "grenar": [
-    { "id": "hockey", "sasong": "vinter", "namn": "Hockey", "beskrivning": "Ishockeyspel", "lat": "Chelsea Dagger", "artist": "The Fratellis", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["mallur", "startskott"] },
-    { "id": "curling", "sasong": "vinter", "namn": "Curling", "beskrivning": "Curling på bord", "lat": "An der schönen blauen Donau", "artist": "Strauss", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["startskott", "jubel"] },
-    { "id": "boxning", "sasong": "sommar", "namn": "Boxning", "beskrivning": "Marshmallows i munnen + säg meningen", "mening": "[MENINGEN]", "lat": "Gonna Fly Now", "artist": "Bill Conti", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["gong", "jubel", "trumvirvel"] },
-    { "id": "fotboll", "sasong": "sommar", "namn": "Fotboll", "beskrivning": "Kicka boll", "lat": "Seven Nation Army", "artist": "The White Stripes", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["mallur", "jubel"] },
-    { "id": "basket", "sasong": "sommar", "namn": "Basket", "beskrivning": "Spotta groda", "lat": "Jump", "artist": "Van Halen", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["jubel", "buu"] },
-    { "id": "slalom", "sasong": "vinter", "namn": "Slalom", "beskrivning": "Shot-slalom med shots och godis", "lat": "Shots", "artist": "LMFAO", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["startskott", "jubel"] },
-    { "id": "hasthoppning", "sasong": "sommar", "namn": "Hästhoppning", "beskrivning": "Käpphäst, tre hinder", "lat": "Wilhelm Tell-uvertyren", "artist": "Rossini", "spotifyUri": "spotify:track:TODO", "startMs": 0, "effekter": ["startskott", "buu", "jubel"] }
+    {
+      "id": "hockey",
+      "sasong": "vinter",
+      "namn": "Hockey",
+      "beskrivning": "Ishockeyspel",
+      "lat": "Chelsea Dagger",
+      "artist": "The Fratellis",
+      "spotifyUri": "spotify:track:52fnLN02thRhTnbzVZzdqq",
+      "startMs": 0,
+      "effekter": ["mallur", "startskott"]
+    },
+    {
+      "id": "curling",
+      "sasong": "vinter",
+      "namn": "Curling",
+      "beskrivning": "Curling på bord",
+      "lat": "An der schönen blauen Donau",
+      "artist": "Strauss",
+      "spotifyUri": "spotify:track:2NOyTijV4TGvH6zIntBIYI",
+      "startMs": 0,
+      "effekter": ["startskott", "jubel"]
+    },
+    {
+      "id": "boxning",
+      "sasong": "sommar",
+      "namn": "Boxning",
+      "beskrivning": "Marshmallows i munnen + säg meningen",
+      "mening": "[MENINGEN]",
+      "lat": "Gonna Fly Now",
+      "artist": "Bill Conti",
+      "spotifyUri": "spotify:track:7iXYRR70wewzVYzWScm99j",
+      "startMs": 0,
+      "effekter": ["gong", "jubel", "trumvirvel"]
+    },
+    {
+      "id": "fotboll",
+      "sasong": "sommar",
+      "namn": "Fotboll",
+      "beskrivning": "Kicka boll",
+      "lat": "Seven Nation Army",
+      "artist": "The White Stripes",
+      "spotifyUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
+      "startMs": 0,
+      "effekter": ["mallur", "jubel"]
+    },
+    {
+      "id": "basket",
+      "sasong": "sommar",
+      "namn": "Basket",
+      "beskrivning": "Spotta groda",
+      "lat": "Jump",
+      "artist": "Van Halen",
+      "spotifyUri": "spotify:track:7N3PAbqfTjSEU1edb2tY8j",
+      "startMs": 0,
+      "effekter": ["jubel", "buu"]
+    },
+    {
+      "id": "slalom",
+      "sasong": "vinter",
+      "namn": "Slalom",
+      "beskrivning": "Shot-slalom med shots och godis",
+      "lat": "Shots",
+      "artist": "LMFAO",
+      "spotifyUri": "spotify:track:1V4jC0vJ5525lEF1bFgPX2",
+      "startMs": 0,
+      "effekter": ["startskott", "jubel"]
+    },
+    {
+      "id": "hasthoppning",
+      "sasong": "sommar",
+      "namn": "Hästhoppning",
+      "beskrivning": "Käpphäst, tre hinder",
+      "lat": "Wilhelm Tell-uvertyren",
+      "artist": "Rossini",
+      "spotifyUri": "spotify:track:3j01GIGm0LYSzbO7X0NfYM",
+      "startMs": 0,
+      "effekter": ["startskott", "buu", "jubel"]
+    }
   ],
   "effekter": [
-    { "id": "mallur", "namn": "Mållur", "beskrivning": "Hockey & fotboll", "farg": "guld", "fil": "clips/mallur.mp3" },
-    { "id": "gong", "namn": "Gong", "beskrivning": "Boxning", "farg": "guld", "fil": "clips/gong.mp3" },
-    { "id": "startskott", "namn": "Startskott", "beskrivning": "Alla grenar", "farg": "is", "fil": "clips/startskott.mp3" },
-    { "id": "jubel", "namn": "Jubel", "beskrivning": "Vinnare", "farg": "is", "fil": "clips/jubel.mp3" },
-    { "id": "trumvirvel", "namn": "Trumvirvel", "beskrivning": "Inför resultat", "farg": "is", "fil": "clips/trumvirvel.mp3" },
-    { "id": "buu", "namn": "Buu", "beskrivning": "Miss", "farg": "varning", "fil": "clips/buu.mp3" }
+    {
+      "id": "mallur",
+      "namn": "Mållur",
+      "beskrivning": "Hockey & fotboll",
+      "farg": "guld",
+      "fil": "clips/mallur.mp3"
+    },
+    {
+      "id": "gong",
+      "namn": "Gong",
+      "beskrivning": "Boxning",
+      "farg": "guld",
+      "fil": "clips/gong.mp3"
+    },
+    {
+      "id": "startskott",
+      "namn": "Startskott",
+      "beskrivning": "Alla grenar",
+      "farg": "is",
+      "fil": "clips/startskott.mp3"
+    },
+    {
+      "id": "jubel",
+      "namn": "Jubel",
+      "beskrivning": "Vinnare",
+      "farg": "is",
+      "fil": "clips/jubel.mp3"
+    },
+    {
+      "id": "trumvirvel",
+      "namn": "Trumvirvel",
+      "beskrivning": "Inför resultat",
+      "farg": "is",
+      "fil": "clips/trumvirvel.mp3"
+    },
+    {
+      "id": "buu",
+      "namn": "Buu",
+      "beskrivning": "Miss",
+      "farg": "varning",
+      "fil": "clips/buu.mp3"
+    }
   ]
 }
