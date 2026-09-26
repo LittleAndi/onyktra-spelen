@@ -185,6 +185,20 @@ h2 {
 .gren.pagar .num { background: var(--accent); color: var(--bg); }
 .gren.pagar .status, .gren.pagar .gsong { color: var(--accent); }
 
+/* Ändra ordning: dra i handtaget */
+.handtag {
+  flex-shrink: 0; width: 44px; height: 44px; margin: -8px -8px -8px 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); cursor: grab; touch-action: none;
+}
+.list.ordnas .gren { border-style: dashed; user-select: none; -webkit-user-select: none; }
+.gren.drar {
+  position: relative; z-index: 2;
+  border-style: solid; border-color: var(--accent); background: var(--active);
+  box-shadow: 0 10px 24px rgb(0 0 0 / .45);
+}
+.gren.drar .handtag { color: var(--accent); cursor: grabbing; }
+
 /* Effektknappar */
 .pads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pad {
@@ -232,7 +246,7 @@ h2 {
 .rad-varde.ok { color: var(--ice); }
 .rad-varde.fel-text { color: var(--warn); }
 .falt { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
-.falt input {
+.falt input, .falt select, .falt textarea {
   min-height: 44px; padding: 0 12px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--surface); color: var(--text);
   font: inherit; font-size: 16px;
@@ -332,7 +346,8 @@ h2 {
 }
 .dialog::backdrop { background: rgb(0 0 0 / .6); }
 .dialog-form { display: flex; flex-direction: column; gap: 14px; }
-.dialog .falt input { background: var(--bg); }
+.dialog .falt input, .dialog .falt select, .dialog .falt textarea { background: var(--bg); }
+.falt textarea { padding: 10px 12px; resize: vertical; line-height: 1.35; }
 .falt small { font-size: 12px; color: var(--muted); }
 .falt small.ok { color: var(--ice); }
 .falt small.fel-text { color: var(--warn); }

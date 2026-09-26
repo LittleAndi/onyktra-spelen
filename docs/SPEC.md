@@ -87,7 +87,7 @@ Konfiguration i en JSON-fil (`config.json`) så att låtar och klipp kan ändras
 
 `startMs` låter en låt starta direkt på refrängen/det kända partiet (skickas som `position_ms`).
 
-Låtar kan också bytas direkt i appen (grenvyn → **Byt låt**, klistra in en Spotify-länk). Bytena sparas i Supabase (`supabaseUrl`, `supabaseKey` i `config.json`), skyddas med PIN-kod och läggs ovanpå grenarna i `config.json`. Se `docs/SUPABASE.md`.
+När Supabase är konfigurerat (`supabaseUrl`, `supabaseKey` i `config.json`) hämtas grenarna från tabellen `grenar` i Supabase i stället, och `config.json` används bara tills de hämtats första gången. I appen kan man då redigera en gren (grenvyn → **Redigera gren**: namn, säsong, beskrivning, meningen och låt via Spotify-länk) och ändra grenarnas ordning genom att dra dem på översikten (**Ändra ordning**). Alla ändringar kräver samma PIN-kod. Se `docs/SUPABASE.md`.
 
 ### Förvalda låtar
 
@@ -146,7 +146,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 /index.html
 /app.js          – UI och state
 /spotify.js      – PKCE, token, Web Playback SDK, API-anrop
-/latar.js        – låtbyten i Supabase
+/grenar.js       – grenar i Supabase
 /audio.js        – Web Audio, förladdning, ducking
 /config.json
 /clips/*.mp3
