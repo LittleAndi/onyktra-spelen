@@ -34,6 +34,16 @@ jobs:
           touch _site/.nojekyll
           find _site -type f | sort
 
+      # Client ID från repovariabeln SPOTIFY_CLIENT_ID (inte hemlig – syns ändå i config.json på sidan).
+      - name: Sätt Spotify client ID
+        if: vars.SPOTIFY_CLIENT_ID != ''
+        env:
+          SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
+        run: |
+          jq --arg id "$SPOTIFY_CLIENT_ID" '.spotifyClientId = $id' _site/config.json > _site/config.tmp
+          mv _site/config.tmp _site/config.json
+          echo "spotifyClientId satt i config.json"
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
