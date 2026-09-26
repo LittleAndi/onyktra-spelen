@@ -206,17 +206,27 @@
       <input id="rg-artist" autocomplete="off">
     </div>
     <div class="falt">
-      <label for="rg-start">Starta vid (m:ss)</label>
-      <input id="rg-start" inputmode="numeric" autocomplete="off" placeholder="0:00">
+      <label for="rg-start-min">Starta låten vid</label>
+      <div class="tidval">
+        <select id="rg-start-min" aria-label="Starta vid, minuter"></select>
+        <span>min</span>
+        <select id="rg-start-sek" aria-label="Starta vid, sekunder"></select>
+        <span>sek</span>
+      </div>
     </div>
     <div class="falt">
-      <label for="rg-timer">Timer (m:ss)</label>
-      <input id="rg-timer" inputmode="numeric" autocomplete="off" placeholder="1:00">
+      <label for="rg-timer-min">Timer</label>
+      <div class="tidval">
+        <select id="rg-timer-min" aria-label="Timer, minuter"></select>
+        <span>min</span>
+        <select id="rg-timer-sek" aria-label="Timer, sekunder"></select>
+        <span>sek</span>
+      </div>
       <small>Grenens standardtid, mellan 0:15 och 10:00.</small>
     </div>
     <div class="falt" id="rg-pin-falt">
       <label for="rg-pin">PIN-kod</label>
-      <input id="rg-pin" type="password" autocomplete="off">
+      <input id="rg-pin" type="password" inputmode="numeric" autocomplete="off">
     </div>
     <p class="start-fel" id="rg-fel" role="alert" hidden></p>
     <div class="row">
@@ -231,7 +241,7 @@
     <h2 id="pd-rubrik">PIN-kod</h2>
     <div class="falt">
       <label for="pd-pin">Ange PIN-koden för att spara</label>
-      <input id="pd-pin" type="password" autocomplete="off">
+      <input id="pd-pin" type="password" inputmode="numeric" autocomplete="off">
     </div>
     <div class="row">
       <button class="btn-ghost" type="button" id="pd-avbryt">Avbryt</button>

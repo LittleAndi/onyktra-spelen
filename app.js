@@ -319,12 +319,6 @@ function fragaPin() {
   });
 }
 
-function tolkaTid(text) {
-  const traff = text.trim().match(/^(?:(\d+):)?(\d+)$/);
-  if (!traff) return text.trim() ? null : 0;
-  return ((Number(traff[1] ?? 0) * 60) + Number(traff[2])) * 1000;
-}
-
 // --- Redigera gren ---
 
 function visaRedigeraFel(text) {
@@ -337,6 +331,25 @@ function sattLankInfo(text, klass = '') {
   $('rg-lank-info').className = klass;
 }
 
+function fyllVal(select, varden) {
+  select.replaceChildren(...varden.map((v) => new Option(String(v).padStart(2, '0'), v)));
+}
+
+// Fyller min/sek-väljarna för prefix (t.ex. 'rg-timer'). En sparad sekund utanför stegen läggs till.
+function sattTidVal(prefix, ms, { maxMin, steg = 1 }) {
+  const totalt = Math.round(ms / 1000);
+  const min = Math.min(maxMin, Math.floor(totalt / 60));
+  const sek = totalt % 60;
+  const sekunder = Array.from({ length: 60 / steg }, (_, i) => i * steg);
+  if (!sekunder.includes(sek)) sekunder.push(sek), sekunder.sort((a, b) => a - b);
+  fyllVal($(`${prefix}-min`), Array.from({ length: maxMin + 1 }, (_, i) => i));
+  fyllVal($(`${prefix}-sek`), sekunder);
+  $(`${prefix}-min`).value = min;
+  $(`${prefix}-sek`).value = sek;
+}
+
+const lasTidVal = (prefix) => (Number($(`${prefix}-min`).value) * 60 + Number($(`${prefix}-sek`).value)) * 1000;
+
 function oppnaRedigera() {
   const gren = hittaGren(aktivGren);
   $('rg-rubrik').textContent = `Redigera – ${gren.namn}`;
@@ -347,8 +360,8 @@ function oppnaRedigera() {
   $('rg-lank').value = '';
   $('rg-lat').value = gren.lat ?? '';
   $('rg-artist').value = gren.artist ?? '';
-  $('rg-start').value = formateraTid(gren.startMs ?? 0);
-  $('rg-timer').value = formateraTid(timerSekunder(gren) * 1000);
+  sattTidVal('rg-start', gren.startMs ?? 0, { maxMin: 15 });
+  sattTidVal('rg-timer', timerSekunder(gren) * 1000, { maxMin: 10, steg: 5 });
   $('rg-pin').value = '';
   $('rg-pin-falt').hidden = Boolean(pinKod);
   sattLankInfo('Spotify → Dela → Kopiera länk');
@@ -389,8 +402,8 @@ async function sparaRedigering() {
   const namn = $('rg-namn').value.trim();
   const lank = $('rg-lank').value.trim();
   const uri = lank ? grenar.tolkaSpotifyLank(lank) : gren.spotifyUri;
-  const startMs = tolkaTid($('rg-start').value);
-  const timerMs = tolkaTid($('rg-timer').value);
+  const startMs = lasTidVal('rg-start');
+  const timerMs = lasTidVal('rg-timer');
   if (!namn) {
     visaRedigeraFel('Grenen måste ha ett namn.');
     return;
@@ -399,12 +412,8 @@ async function sparaRedigering() {
     visaRedigeraFel('Klistra in en länk till en Spotify-låt.');
     return;
   }
-  if (startMs == null) {
-    visaRedigeraFel('Skriv starttiden som m:ss, t.ex. 0:42.');
-    return;
-  }
-  if (timerMs == null || timerMs < 15000 || timerMs > 600000) {
-    visaRedigeraFel('Skriv timern som m:ss, mellan 0:15 och 10:00.');
+  if (timerMs < 15000 || timerMs > 600000) {
+    visaRedigeraFel('Timern måste vara mellan 0:15 och 10:00.');
     return;
   }
   const pin = pinKod || $('rg-pin').value.trim();
