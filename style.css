@@ -204,3 +204,43 @@ h2 {
   border: 1px solid var(--warn); color: var(--warn);
   background: var(--surface); font-size: 14px;
 }
+
+[hidden] { display: none !important; }
+
+/* Startvy */
+.rad { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 15px; min-height: 28px; }
+.rad-varde { color: var(--muted); text-align: right; }
+.rad-varde.ok { color: var(--ice); }
+.rad-varde.fel-text { color: var(--warn); }
+.falt { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.falt input {
+  min-height: 44px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  font: inherit; font-size: 16px;
+}
+.start-fel { margin: 0; font-size: 14px; color: var(--warn); }
+.start-knappar { display: flex; flex-direction: column; gap: 4px; }
+.btn-primary {
+  width: 100%; min-height: 64px; border-radius: 14px;
+  border: none; background: var(--accent); color: var(--bg);
+  font-family: var(--display); font-weight: 800; font-size: 24px;
+  text-transform: uppercase; letter-spacing: .02em;
+}
+.btn-primary:disabled { opacity: .6; }
+.start-knappar .link-btn { align-self: center; }
+
+/* Spela/paus */
+.play .ikon-paus { display: none; }
+.play.spelar .ikon-spela { display: none; }
+.play.spelar .ikon-paus { display: block; }
+.play:disabled { opacity: .55; }
+
+/* Diskret banner för fel */
+.banner {
+  position: fixed; z-index: 10;
+  top: calc(8px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  width: calc(100% - 32px); max-width: 448px;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--warn); color: var(--text);
+  font-size: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / .4);
+}

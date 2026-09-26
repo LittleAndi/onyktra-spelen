@@ -1,7 +1,11 @@
 // UI och state för Onyktra Spelen.
 
+import * as spotify from './spotify.js';
+
 const STATUS_KEY = 'os.grenstatus';
 const DUCKING_KEY = 'os.ducking';
+const KLIENTID_KEY = 'os.clientId';
+const TRACK_URI = /^spotify:track:[A-Za-z0-9]{22}$/;
 
 const STATUS_TEXT = { kommande: '', pagar: 'Pågår', klar: 'Klar' };
 const SASONG_TEXT = { sommar: 'Sommar', vinter: 'Vinter' };
@@ -13,6 +17,9 @@ const $ = (id) => document.getElementById(id);
 
 let config;
 let status = {};
+let spelarStatus = null;
+let ljudkontext = null;
+let bannerTimer;
 
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -52,14 +59,48 @@ function latText(gren) {
   return [gren.lat, gren.artist].filter(Boolean).join(' · ') || 'Låt ej angiven';
 }
 
+function visaBanner(text) {
+  const banner = $('banner');
+  banner.textContent = text;
+  banner.hidden = false;
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => { banner.hidden = true; }, 5000);
+}
+
+// Alla grenars låtar i ordning, så att föregående/nästa går mellan kvällens låtar.
+function grenlatar() {
+  return config.grenar.filter((g) => TRACK_URI.test(g.spotifyUri ?? ''));
+}
+
+async function spelaGren(gren) {
+  const latar = grenlatar();
+  const index = latar.indexOf(gren);
+  if (index < 0) {
+    visaBanner(`Ingen Spotify-låt angiven för ${gren.namn}.`);
+    return;
+  }
+  if (!spotify.arInloggad()) {
+    visaBanner('Spotify är inte anslutet – ladda om sidan och logga in.');
+    return;
+  }
+  try {
+    await spotify.spela(latar.map((g) => g.spotifyUri), { index, startMs: gren.startMs ?? 0 });
+  } catch (fel) {
+    console.error(fel);
+    visaBanner(`Kunde inte starta låten: ${fel.message}`);
+  }
+}
+
 // Att starta en gren sätter den som "pågår" och den som pågick som "klar".
 function startaGren(id) {
+  spotify.aktivera();
   for (const [annan, s] of Object.entries(status)) {
     if (s === 'pagar' && annan !== id) status[annan] = 'klar';
   }
   status[id] = 'pagar';
   sparaLagrat(STATUS_KEY, status);
   render();
+  spelaGren(config.grenar.find((g) => g.id === id));
 }
 
 function nollstall() {
@@ -76,13 +117,48 @@ function renderRaknare() {
   $('raknare').textContent = `${pagar >= 0 ? pagar + 1 : klara}/${total}`;
 }
 
-// Statiskt tills Spotify är inkopplat: visar den pågående grenens låt.
+function formateraTid(ms) {
+  if (!Number.isFinite(ms)) return '–:––';
+  const sek = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(sek / 60)}:${String(sek % 60).padStart(2, '0')}`;
+}
+
+// Visar Spotify-spelarens låt om den finns, annars den pågående grenens låt.
 function renderSpelasNu() {
-  const index = config.grenar.findIndex((g) => grenStatus(g.id) === 'pagar');
-  const gren = config.grenar[index];
-  $('np-nr').textContent = gren ? String(index + 1).padStart(2, '0') : '–';
-  $('np-titel').textContent = gren ? (gren.lat || gren.namn) : 'Ingen låt';
-  $('np-artist').textContent = gren ? (gren.artist || '') : 'Välj en gren för att starta';
+  if (spelarStatus?.titel) {
+    const index = config.grenar.findIndex((g) => spelarStatus.uris.includes(g.spotifyUri));
+    $('np-nr').textContent = index >= 0 ? String(index + 1).padStart(2, '0') : '♪';
+    $('np-titel').textContent = spelarStatus.titel;
+    $('np-artist').textContent = spelarStatus.artist;
+  } else {
+    const index = config.grenar.findIndex((g) => grenStatus(g.id) === 'pagar');
+    const gren = config.grenar[index];
+    $('np-nr').textContent = gren ? String(index + 1).padStart(2, '0') : '–';
+    $('np-titel').textContent = gren ? (gren.lat || gren.namn) : 'Ingen låt';
+    $('np-artist').textContent = gren ? (gren.artist || '') : 'Välj en gren för att starta';
+  }
+  const spelar = spelarStatus != null && !spelarStatus.pausad;
+  $('spela').classList.toggle('spelar', spelar);
+  $('spela').setAttribute('aria-label', spelar ? 'Pausa' : 'Spela');
+  renderForlopp();
+}
+
+function renderForlopp() {
+  if (!spelarStatus?.langd) {
+    $('np-tid').textContent = '0:00';
+    $('np-langd').textContent = '–:––';
+    $('np-bar').style.width = '0';
+    return;
+  }
+  const { langd, position, pausad, tid } = spelarStatus;
+  const nu = Math.min(langd, position + (pausad ? 0 : performance.now() - tid));
+  $('np-tid').textContent = formateraTid(nu);
+  $('np-langd').textContent = formateraTid(langd);
+  $('np-bar').style.width = `${(nu / langd) * 100}%`;
+}
+
+function sattTransport(pa) {
+  for (const id of ['foregaende', 'spela', 'nasta']) $(id).disabled = !pa;
 }
 
 function renderDucking() {
@@ -144,6 +220,7 @@ function renderNatstatus() {
 }
 
 function visaFel(text) {
+  visaVy('oversikt');
   $('grenar').replaceChildren(el('div', { class: 'fel', role: 'alert' }, text));
 }
 
@@ -151,6 +228,143 @@ async function laddaConfig() {
   const svar = await fetch('config.json', { cache: 'no-cache' });
   if (!svar.ok) throw new Error(`config.json: ${svar.status}`);
   return svar.json();
+}
+
+// --- Startvy ---
+
+function klientId() {
+  const fran = config.spotifyClientId;
+  if (fran && fran !== 'DIN_CLIENT_ID') return fran;
+  return lasLagrat(KLIENTID_KEY, '') || null;
+}
+
+function sattRad(id, text, klass = '') {
+  $(id).textContent = text;
+  $(id).className = `rad-varde ${klass}`;
+}
+
+function visaStartFel(text) {
+  $('start-fel').textContent = text ?? '';
+  $('start-fel').hidden = !text;
+}
+
+function visaVy(id) {
+  $('start').hidden = id !== 'start';
+  $('oversikt').hidden = id !== 'oversikt';
+  window.scrollTo(0, 0);
+}
+
+function renderStart() {
+  const inloggad = spotify.arInloggad();
+  $('klientid-falt').hidden = inloggad || Boolean(config.spotifyClientId && config.spotifyClientId !== 'DIN_CLIENT_ID');
+  $('logga-in').hidden = inloggad;
+  $('starta').hidden = !inloggad;
+  $('logga-ut').hidden = !inloggad;
+  $('utan-spotify').hidden = false;
+  if (!inloggad) {
+    sattRad('start-konto', 'Ej inloggad');
+    sattRad('start-spelare', 'Ej ansluten');
+  }
+}
+
+async function visaKonto() {
+  sattRad('start-konto', 'Kontrollerar…');
+  try {
+    const profil = await spotify.hamtaProfil();
+    const namn = profil.display_name || profil.id;
+    if (profil.product === 'premium') sattRad('start-konto', `${namn} ✓`, 'ok');
+    else sattRad('start-konto', `${namn} – Premium krävs`, 'fel-text');
+  } catch (fel) {
+    sattRad('start-konto', 'Fel', 'fel-text');
+    visaStartFel(fel.message);
+    renderStart();
+  }
+}
+
+function spelarHandelse(nyStatus) {
+  spelarStatus = nyStatus;
+  renderSpelasNu();
+}
+
+async function loggaIn() {
+  const id = klientId();
+  if (!id) {
+    visaStartFel('Ange Spotify client ID först.');
+    $('klientid').focus();
+    return;
+  }
+  spotify.konfigurera({ clientId: id, redirectUri: config.redirectUri });
+  try {
+    await spotify.loggaIn();
+  } catch (fel) {
+    visaStartFel(fel.message);
+  }
+}
+
+// Körs i användarens tryck: låser upp ljud (iOS) och ansluter Spotify-spelaren.
+async function startaAppen() {
+  spotify.aktivera();
+  try {
+    ljudkontext ??= new AudioContext();
+    ljudkontext.resume();
+  } catch {
+    // Web Audio saknas – klippen kopplas in i audio.js.
+  }
+
+  visaStartFel(null);
+  $('starta').disabled = true;
+  $('starta').textContent = 'Startar…';
+  sattRad('start-spelare', 'Ansluter…');
+  try {
+    await spotify.forberedSpelare({ onStatus: spelarHandelse, onFel: visaBanner });
+    spotify.aktivera();
+    await spotify.anslut();
+    sattRad('start-spelare', 'Ansluten ✓', 'ok');
+    sattTransport(true);
+    visaVy('oversikt');
+  } catch (fel) {
+    console.error(fel);
+    sattRad('start-spelare', 'Fel', 'fel-text');
+    visaStartFel(fel.message);
+    if (!spotify.arInloggad()) renderStart();
+  } finally {
+    $('starta').disabled = false;
+    $('starta').textContent = 'Starta Onyktra Spelen';
+  }
+}
+
+function initStart() {
+  $('klientid').value = lasLagrat(KLIENTID_KEY, '');
+  $('klientid').addEventListener('input', (e) => sparaLagrat(KLIENTID_KEY, e.target.value.trim()));
+  $('logga-in').addEventListener('click', loggaIn);
+  $('starta').addEventListener('click', startaAppen);
+  $('utan-spotify').addEventListener('click', () => visaVy('oversikt'));
+  $('logga-ut').addEventListener('click', () => {
+    spotify.loggaUt();
+    sattTransport(false);
+    visaStartFel(null);
+    renderStart();
+  });
+
+  $('spela').addEventListener('click', () => { spotify.aktivera(); spotify.vaxlaPaus(); });
+  $('foregaende').addEventListener('click', () => spotify.foregaende());
+  $('nasta').addEventListener('click', () => spotify.nasta());
+  setInterval(() => { if (spelarStatus && !spelarStatus.pausad) renderForlopp(); }, 500);
+}
+
+async function initSpotify() {
+  spotify.konfigurera({ clientId: klientId(), redirectUri: config.redirectUri });
+  try {
+    await spotify.hanteraInloggning();
+  } catch (fel) {
+    visaStartFel(fel.message);
+  }
+  renderStart();
+  if (!spotify.arInloggad()) return;
+  visaKonto();
+  // Ladda SDK:t i förväg så att Starta-trycket kan låsa upp ljudet direkt.
+  spotify.forberedSpelare({ onStatus: spelarHandelse, onFel: visaBanner })
+    .catch((fel) => visaStartFel(fel.message));
 }
 
 async function init() {
@@ -177,6 +391,9 @@ async function init() {
   renderDucking();
   renderEffekter();
   render();
+
+  initStart();
+  await initSpotify();
 }
 
 init();
