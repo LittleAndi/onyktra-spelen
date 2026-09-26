@@ -17,7 +17,7 @@ Låtar kan bytas direkt i appen. Bytena sparas i Supabase och syns på alla enhe
 1. I Spotify: **Dela → Kopiera länk** på låten.
 2. I appen: öppna grenen och tryck **Byt låt** under musikkortet.
 3. Klistra in länken. Låtnamn och artist hämtas automatiskt (går att ändra).
-4. Ange eventuellt var låten ska börja (m:ss), och PIN-koden första gången. Telefonen kommer sedan ihåg koden.
+4. Ange eventuellt var låten ska börja (m:ss), och PIN-koden första gången. Appen kommer ihåg koden tills sidan laddas om – den sparas aldrig på telefonen.
 5. **Spara**. **Återställ till förvald låt** tar bort bytet så att låten i `config.json` gäller igen.
 
 ## Bra att veta

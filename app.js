@@ -8,7 +8,7 @@ const AKTUELL_KEY = 'os.aktuellGren';
 const GAMMAL_STATUS_KEY = 'os.grenstatus';
 const DUCKING_KEY = 'os.ducking';
 const KLIENTID_KEY = 'os.clientId';
-const PIN_KEY = 'os.pin';
+const GAMMAL_PIN_KEY = 'os.pin';
 const TRACK_URI = /^spotify:track:[A-Za-z0-9]{22}$/;
 
 const SASONG_TEXT = { sommar: 'Sommar', vinter: 'Vinter' };
@@ -27,6 +27,7 @@ let duckad = false;
 let tonarUt = false;
 let aktivGren = null; // id för grenen som visas i grenvyn
 let bannerTimer;
+let pinKod = ''; // PIN-koden hålls bara i minnet, sparas aldrig i localStorage
 let startKlar; // anropas när init (inkl. ev. Spotify-inloggning) är klar
 const startKlarLofte = new Promise((klar) => { startKlar = klar; });
 
@@ -321,7 +322,7 @@ function oppnaBytLat() {
   $('bl-artist').value = gren.artist ?? '';
   $('bl-start').value = formateraTid(gren.startMs ?? 0);
   $('bl-pin').value = '';
-  $('bl-pin-falt').hidden = Boolean(lasLagrat(PIN_KEY, ''));
+  $('bl-pin-falt').hidden = Boolean(pinKod);
   $('bl-aterstall').hidden = !gren.bytt;
   sattLankInfo('Spotify → Dela → Kopiera länk');
   visaBytFel(null);
@@ -369,7 +370,7 @@ async function sparaBytLat(aterstall = false) {
     visaBytFel('Skriv starttiden som m:ss, t.ex. 0:42.');
     return;
   }
-  const pin = lasLagrat(PIN_KEY, '') || $('bl-pin').value.trim();
+  const pin = pinKod || $('bl-pin').value.trim();
   if (!pin) {
     $('bl-pin-falt').hidden = false;
     visaBytFel('Ange PIN-koden.');
@@ -386,13 +387,13 @@ async function sparaBytLat(aterstall = false) {
       artist: $('bl-artist').value.trim() || null,
       startMs,
     });
-    sparaLagrat(PIN_KEY, pin);
+    pinKod = pin;
     tillampaLatar(rader);
     $('byt-lat').close();
     visaBanner(aterstall ? `${gren.namn} har fått sin förvalda låt igen.` : `Ny låt sparad för ${gren.namn}.`);
   } catch (fel) {
     if (fel.felPin) {
-      sparaLagrat(PIN_KEY, '');
+      pinKod = '';
       $('bl-pin-falt').hidden = false;
       $('bl-pin').value = '';
     }
@@ -861,7 +862,10 @@ async function init() {
   latar.konfigurera({ url: config.supabaseUrl, key: config.supabaseKey });
 
   aktuellGren = lasLagrat(AKTUELL_KEY, null);
-  try { localStorage.removeItem(GAMMAL_STATUS_KEY); } catch { /* Lagring otillgänglig. */ }
+  try {
+    localStorage.removeItem(GAMMAL_STATUS_KEY);
+    localStorage.removeItem(GAMMAL_PIN_KEY);
+  } catch { /* Lagring otillgänglig. */ }
   // Efter omladdning börjar appen på startvyn; släng en gammal grenpost i historiken.
   if (history.state?.gren) history.replaceState(null, '');
 
