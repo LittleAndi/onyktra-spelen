@@ -348,6 +348,8 @@ h2 {
 .dialog-form { display: flex; flex-direction: column; gap: 14px; }
 .dialog .falt input, .dialog .falt select, .dialog .falt textarea { background: var(--bg); }
 .falt textarea { padding: 10px 12px; resize: vertical; line-height: 1.35; }
+.tidval { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 16px; }
+.tidval select { flex: 1; min-width: 0; }
 .falt small { font-size: 12px; color: var(--muted); }
 .falt small.ok { color: var(--ice); }
 .falt small.fel-text { color: var(--warn); }

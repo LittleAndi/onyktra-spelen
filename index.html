@@ -206,12 +206,22 @@
       <input id="rg-artist" autocomplete="off">
     </div>
     <div class="falt">
-      <label for="rg-start">Starta vid (m:ss)</label>
-      <input id="rg-start" inputmode="numeric" autocomplete="off" placeholder="0:00">
+      <label for="rg-start-min">Starta låten vid</label>
+      <div class="tidval">
+        <select id="rg-start-min" aria-label="Starta vid, minuter"></select>
+        <span>min</span>
+        <select id="rg-start-sek" aria-label="Starta vid, sekunder"></select>
+        <span>sek</span>
+      </div>
     </div>
     <div class="falt">
-      <label for="rg-timer">Timer (m:ss)</label>
-      <input id="rg-timer" inputmode="numeric" autocomplete="off" placeholder="1:00">
+      <label for="rg-timer-min">Timer</label>
+      <div class="tidval">
+        <select id="rg-timer-min" aria-label="Timer, minuter"></select>
+        <span>min</span>
+        <select id="rg-timer-sek" aria-label="Timer, sekunder"></select>
+        <span>sek</span>
+      </div>
       <small>Grenens standardtid, mellan 0:15 och 10:00.</small>
     </div>
     <div class="falt" id="rg-pin-falt">
