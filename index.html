@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1620">
+<title>Onyktra Spelen</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<main class="screen" id="oversikt">
+  <header class="head">
+    <div>
+      <div class="eyebrow">OS · Thomas 50 år</div>
+      <h1>Onyktra Spelen</h1>
+    </div>
+    <div class="counter"><small>Gren</small><b id="raknare">–/–</b></div>
+  </header>
+
+  <section class="card" aria-label="Spelas nu">
+    <div class="np">
+      <div class="art" id="np-nr">–</div>
+      <div class="np-meta">
+        <div class="eyebrow eyebrow-tight">Spelas nu · Spotify</div>
+        <div class="np-title" id="np-titel">Ingen låt</div>
+        <div class="np-artist" id="np-artist">Välj en gren för att starta</div>
+      </div>
+    </div>
+    <div class="progress">
+      <span id="np-tid">0:00</span>
+      <div class="bar"><i id="np-bar"></i></div>
+      <span id="np-langd">–:––</span>
+    </div>
+    <div class="controls">
+      <div class="transport">
+        <button class="icon-btn" type="button" aria-label="Föregående" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+        </button>
+        <button class="play" type="button" aria-label="Spela" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg>
+        </button>
+        <button class="icon-btn" type="button" aria-label="Nästa" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
+      </div>
+      <button class="pill" type="button" id="ducking" aria-pressed="true"><span class="dot"></span><span id="ducking-text">Sänk vid klipp</span></button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Grenar</h2><span>Tryck för att starta</span></div>
+    <div class="list" id="grenar"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Ljudeffekter</h2><span>Spelas ovanpå musiken</span></div>
+    <div class="pads" id="effekter"></div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-status"><span class="dot" id="nat-dot"></span><span id="nat-text">Kontrollerar nät…</span></div>
+    <button class="link-btn" type="button" id="nollstall">Nollställ grenar</button>
+  </footer>
+</main>
+</body>
+</html>
