@@ -642,6 +642,7 @@ function renderGrenvy() {
   $('g-sasong').textContent = SASONG_TEXT[gren.sasong] ?? '';
   $('g-sasong').className = `tag ${gren.sasong ?? ''}`;
   $('g-namn').textContent = gren.namn;
+  anpassaRubrik();
   $('g-regel').textContent = gren.regel || gren.beskrivning || '';
   $('g-mening-kort').hidden = !gren.mening;
   $('g-mening').textContent = gren.mening ? `”${gren.mening}”` : '';
@@ -652,6 +653,23 @@ function renderGrenvy() {
   renderGrenMusik();
   renderTimer();
 }
+
+// Grennamnet är stort men får aldrig brytas mitt i ett ord: krymp tills längsta ordet ryms på en rad.
+function anpassaRubrik() {
+  const h1 = $('g-namn');
+  if (!h1.clientWidth) return;
+  h1.style.overflowWrap = '';
+  let storlek = 72;
+  h1.style.fontSize = `${storlek}px`;
+  while (h1.scrollWidth > h1.clientWidth && storlek > 36) {
+    storlek -= 2;
+    h1.style.fontSize = `${storlek}px`;
+  }
+  if (h1.scrollWidth > h1.clientWidth) h1.style.overflowWrap = 'anywhere';
+}
+
+document.fonts?.ready.then(() => { if (aktivGren) anpassaRubrik(); });
+window.addEventListener('resize', () => { if (aktivGren) anpassaRubrik(); });
 
 // Musikkortet visar spelarens låt om det är grenens, annars grenens förvalda låt.
 function renderGrenMusik() {
