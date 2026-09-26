@@ -161,6 +161,8 @@ export async function hanteraInloggning() {
       : `Inloggningen misslyckades (${params.get('error')}).`);
   }
   if (!verifier || params.get('state') !== state) {
+    // Gammal omdirigering (t.ex. en andra flik med samma ?code=…) när inloggningen redan är klar – ignorera.
+    if (token) return false;
     throw new SpotifyFel('Inloggningen kunde inte verifieras. Försök igen.');
   }
   try {
