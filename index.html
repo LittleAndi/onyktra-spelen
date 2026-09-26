@@ -149,6 +149,7 @@
       </button>
       <button class="btn-ghost grow" type="button" id="g-tona" disabled>Tona ut</button>
     </div>
+    <button class="link-btn" type="button" id="g-byt-lat" hidden>Byt låt</button>
   </section>
 
   <section class="section">
@@ -158,5 +159,39 @@
 
   <button class="btn-action btn-stor" type="button" id="g-nasta">Nästa gren</button>
 </main>
+
+<dialog class="dialog" id="byt-lat" aria-labelledby="bl-rubrik">
+  <form class="dialog-form" id="bl-form" method="dialog">
+    <h2 id="bl-rubrik">Byt låt</h2>
+    <div class="falt">
+      <label for="bl-lank">Spotify-länk</label>
+      <input id="bl-lank" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="https://open.spotify.com/track/…">
+      <small id="bl-lank-info">Spotify → Dela → Kopiera länk</small>
+    </div>
+    <div class="falt">
+      <label for="bl-lat">Låt</label>
+      <input id="bl-lat" autocomplete="off">
+    </div>
+    <div class="falt">
+      <label for="bl-artist">Artist</label>
+      <input id="bl-artist" autocomplete="off">
+    </div>
+    <div class="falt">
+      <label for="bl-start">Starta vid (m:ss)</label>
+      <input id="bl-start" inputmode="numeric" autocomplete="off" placeholder="0:00">
+    </div>
+    <div class="falt" id="bl-pin-falt">
+      <label for="bl-pin">PIN-kod</label>
+      <input id="bl-pin" type="password" autocomplete="off">
+    </div>
+    <p class="start-fel" id="bl-fel" role="alert" hidden></p>
+    <div class="row">
+      <button class="btn-ghost" type="button" id="bl-avbryt">Avbryt</button>
+      <button class="btn-action" type="submit" id="bl-spara">Spara</button>
+    </div>
+    <button class="link-btn" type="button" id="bl-aterstall" hidden>Återställ till förvald låt</button>
+  </form>
+</dialog>
 </body>
 </html>
