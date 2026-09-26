@@ -15,8 +15,7 @@
       "lat": "Chelsea Dagger",
       "artist": "The Fratellis",
       "spotifyUri": "spotify:track:52fnLN02thRhTnbzVZzdqq",
-      "startMs": 0,
-      "effekter": ["visselpipa", "jubel", "charge"]
+      "startMs": 0
     },
     {
       "id": "curling",
@@ -26,8 +25,7 @@
       "lat": "An der schönen blauen Donau",
       "artist": "Strauss",
       "spotifyUri": "spotify:track:2NOyTijV4TGvH6zIntBIYI",
-      "startMs": 0,
-      "effekter": ["visselpipa", "jubel"]
+      "startMs": 0
     },
     {
       "id": "boxning",
@@ -38,8 +36,7 @@
       "lat": "Gonna Fly Now",
       "artist": "Bill Conti",
       "spotifyUri": "spotify:track:7iXYRR70wewzVYzWScm99j",
-      "startMs": 0,
-      "effekter": ["gong", "jubel", "trumvirvel"]
+      "startMs": 0
     },
     {
       "id": "fotboll",
@@ -49,8 +46,7 @@
       "lat": "Seven Nation Army",
       "artist": "The White Stripes",
       "spotifyUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
-      "startMs": 0,
-      "effekter": ["visselpipa", "jubel"]
+      "startMs": 0
     },
     {
       "id": "basket",
@@ -60,8 +56,7 @@
       "lat": "Jump",
       "artist": "Van Halen",
       "spotifyUri": "spotify:track:7N3PAbqfTjSEU1edb2tY8j",
-      "startMs": 0,
-      "effekter": ["jubel", "buu", "charge"]
+      "startMs": 0
     },
     {
       "id": "slalom",
@@ -71,8 +66,7 @@
       "lat": "Shots",
       "artist": "LMFAO",
       "spotifyUri": "spotify:track:1V4jC0vJ5525lEF1bFgPX2",
-      "startMs": 0,
-      "effekter": ["visselpipa", "jubel"]
+      "startMs": 0
     },
     {
       "id": "hasthoppning",
@@ -82,8 +76,7 @@
       "lat": "Wilhelm Tell-uvertyren",
       "artist": "Rossini",
       "spotifyUri": "spotify:track:3j01GIGm0LYSzbO7X0NfYM",
-      "startMs": 0,
-      "effekter": ["visselpipa", "buu", "jubel"]
+      "startMs": 0
     }
   ],
   "effekter": [

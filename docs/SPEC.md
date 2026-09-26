@@ -66,10 +66,10 @@ Konfiguration i en JSON-fil (`config.json`) så att låtar och klipp kan ändras
 {
   "duckLevel": 0.3,
   "grenar": [
-    { "id": "hockey", "sasong": "vinter", "namn": "Hockey", "beskrivning": "Ishockeyspel", "spotifyUri": "spotify:track:…", "startMs": 0, "effekter": ["mallur", "startskott"] },
-    { "id": "curling", "sasong": "vinter", "namn": "Curling", "beskrivning": "Curling på bord", "spotifyUri": "…", "effekter": ["startskott", "jubel"] },
-    { "id": "boxning", "sasong": "sommar", "namn": "Boxning", "beskrivning": "Marshmallows i munnen + säg meningen", "mening": "[MENINGEN]", "spotifyUri": "…", "effekter": ["gong", "jubel"] },
-    { "id": "fotboll", "sasong": "sommar", "namn": "Fotboll", "beskrivning": "Kicka boll", "spotifyUri": "…", "effekter": ["mallur"] },
+    { "id": "hockey", "sasong": "vinter", "namn": "Hockey", "beskrivning": "Ishockeyspel", "spotifyUri": "spotify:track:…", "startMs": 0 },
+    { "id": "curling", "sasong": "vinter", "namn": "Curling", "beskrivning": "Curling på bord", "spotifyUri": "…" },
+    { "id": "boxning", "sasong": "sommar", "namn": "Boxning", "beskrivning": "Marshmallows i munnen + säg meningen", "mening": "[MENINGEN]", "spotifyUri": "…" },
+    { "id": "fotboll", "sasong": "sommar", "namn": "Fotboll", "beskrivning": "Kicka boll", "spotifyUri": "…" },
     { "id": "basket", "sasong": "sommar", "namn": "Basket", "beskrivning": "Spotta groda", "spotifyUri": "…" },
     { "id": "slalom", "sasong": "vinter", "namn": "Slalom", "beskrivning": "Shot-slalom med shots och godis", "spotifyUri": "…" },
     { "id": "hasthoppning", "sasong": "sommar", "namn": "Hästhoppning", "beskrivning": "Käpphäst, tre hinder", "spotifyUri": "…" }
@@ -111,8 +111,8 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 
 ### 1. Översikt (huvudvy)
 - Rubrik: "OS · Thomas 50 år / Onyktra Spelen", räknare "Gren 3/7".
-- **Spelas nu-kort**: låtnamn, artist, förlopp, knappar föregående/paus/nästa, reglage "Sänk vid klipp" (på/av + nivå).
-- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning, låt och status (kommande / pågår / klar). Tryck → startar grenens låt och öppnar grenvyn.
+- **Spelas nu-kort**: låtnamn, artist, förlopp, knappar föregående/paus/nästa, reglage "Sänk vid klipp" (på/av + nivå), "Tona ut" (fade till 0 på 3 s, sedan paus).
+- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning, låt och status (kommande / pågår / klar). Tryck → startar grenens låt och öppnar grenvyn. Spelar musik eller ett klipp redan startas ingen ny låt, så att det som spelar får fortsätta.
 - **Effektknappar**: rutnät 3×2, spelas direkt vid tryck (flera kan överlappa).
 - Sidfot: nätstatus.
 
@@ -122,7 +122,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 - **Timer**: valfri nedräkning (standard 60 s), Start/Återställ; spelar "startskott" vid start och "gong" vid 0 (konfigurerbart).
   Konfigureras med `timerSekunder`, `timerStartEffekt` och `timerSlutEffekt` i `config.json` (globalt eller per gren). Tiden kan justeras ±15 s innan start.
 - Musikkort: play/paus, "Tona ut" (fade till 0 på 3 s, sedan paus).
-- Grenens effektknappar (från `effekter` i config) + alla övriga i en mindre rad.
+- Alla effektknappar, samma uppsättning och ordning som i översikten.
 - "Markera klar & nästa gren".
 
 ## Beteende
@@ -156,7 +156,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 ## Acceptanskriterier
 
 1. Inloggning med Spotify fungerar från telefon (iPhone Safari och Android Chrome).
-2. Tryck på en gren startar rätt låt inom ~1 s.
+2. Tryck på en gren startar rätt låt inom ~1 s när inget annat spelar; spelar musik eller klipp fortsätter det.
 3. En effekt spelas ovanpå pågående låt utan att låten pausas; låten sänks till `duckLevel` och återgår efteråt.
 4. Efter första besöket går appen att öppna och klippen att spela i flygplansläge, även efter omladdning.
 5. Omladdning av sidan behåller grenstatus.

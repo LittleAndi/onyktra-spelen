@@ -96,7 +96,13 @@ async function spelaGren(gren) {
   }
 }
 
+// Spelar musik eller ett klipp just nu? Då ska det få fortsätta.
+function ljudSpelar() {
+  return duckad || (spelarStatus != null && !spelarStatus.pausad && !tonarUt);
+}
+
 // Att starta en gren sätter den som "pågår" och den som pågick som "klar".
+// Grenens låt startas bara om inget annat spelar – annars trycker man play själv.
 function startaGren(id) {
   spotify.aktivera();
   for (const [annan, s] of Object.entries(status)) {
@@ -105,7 +111,7 @@ function startaGren(id) {
   status[id] = 'pagar';
   sparaLagrat(STATUS_KEY, status);
   render();
-  spelaGren(hittaGren(id));
+  if (!ljudSpelar()) spelaGren(hittaGren(id));
 }
 
 const hittaGren = (id) => config.grenar.find((g) => g.id === id);
@@ -147,6 +153,7 @@ function renderSpelasNu() {
   const spelar = spelarStatus != null && !spelarStatus.pausad;
   $('spela').classList.toggle('spelar', spelar);
   $('spela').setAttribute('aria-label', spelar ? 'Pausa' : 'Spela');
+  renderTona();
   renderForlopp();
 }
 
@@ -165,7 +172,7 @@ function renderForlopp() {
 }
 
 function sattTransport(pa) {
-  for (const id of ['foregaende', 'spela', 'nasta', 'g-spela', 'g-tona']) $(id).disabled = !pa;
+  for (const id of ['foregaende', 'spela', 'nasta', 'tona', 'g-spela', 'g-tona']) $(id).disabled = !pa;
 }
 
 function renderDucking() {
@@ -222,6 +229,7 @@ function effektKnapp(effekt) {
 
 function renderEffekter() {
   $('effekter').replaceChildren(...config.effekter.map(effektKnapp));
+  $('g-effekter').replaceChildren(...config.effekter.map(effektKnapp));
   renderEffektStatus();
 }
 
@@ -334,13 +342,6 @@ function renderGrenvy() {
   $('g-mening-kort').hidden = !gren.mening;
   $('g-mening').textContent = gren.mening ? `”${gren.mening}”` : '';
 
-  const egna = (gren.effekter ?? []).map((id) => config.effekter.find((e) => e.id === id)).filter(Boolean);
-  const ovriga = config.effekter.filter((e) => !egna.includes(e));
-  $('g-effekter').replaceChildren(...egna.map(effektKnapp));
-  $('g-effekter').hidden = egna.length === 0;
-  $('g-ovriga').replaceChildren(...ovriga.map(effektKnapp));
-  renderEffektStatus();
-
   const nasta = nastaGren(gren.id);
   $('g-klar').textContent = s === 'pagar'
     ? (nasta ? 'Klar – nästa gren' : 'Klar – sista grenen')
@@ -363,8 +364,14 @@ function renderGrenMusik() {
   const spelar = grenensLat && !spelarStatus.pausad;
   $('g-spela').classList.toggle('spelar', spelar);
   $('g-spela').setAttribute('aria-label', spelar ? 'Pausa' : 'Spela');
-  $('g-tona').textContent = tonarUt ? 'Tonar ut…' : 'Tona ut';
-  $('g-tona').classList.toggle('aktiv', tonarUt);
+  renderTona();
+}
+
+function renderTona() {
+  for (const id of ['tona', 'g-tona']) {
+    $(id).textContent = tonarUt ? 'Tonar ut…' : 'Tona ut';
+    $(id).classList.toggle('aktiv', tonarUt);
+  }
 }
 
 function spelaGrenMusik() {
@@ -380,7 +387,7 @@ function spelaGrenMusik() {
 async function tonaUt() {
   if (tonarUt || !spelarStatus || spelarStatus.pausad) return;
   tonarUt = true;
-  renderGrenMusik();
+  renderTona();
   const klar = await spotify.tonaVolym(0, 3000);
   if (klar && tonarUt) {
     try {
@@ -390,7 +397,7 @@ async function tonaUt() {
     }
     tonarUt = false;
     uppdateraDucking();
-    if (aktivGren) renderGrenMusik();
+    renderTona();
   }
 }
 
@@ -400,7 +407,7 @@ function avbrytToning() {
   tonarUt = false;
   const sank = duckad && duckingPa();
   spotify.tonaVolym(sank ? (config.duckLevel ?? 0.3) : 1, 0);
-  if (aktivGren) renderGrenMusik();
+  renderTona();
 }
 
 function klarMedGren() {
@@ -635,6 +642,7 @@ function initStart() {
   $('spela').addEventListener('click', () => { spotify.aktivera(); avbrytToning(); spotify.vaxlaPaus(); });
   $('foregaende').addEventListener('click', () => spotify.foregaende());
   $('nasta').addEventListener('click', () => spotify.nasta());
+  $('tona').addEventListener('click', tonaUt);
   setInterval(() => { if (spelarStatus && !spelarStatus.pausad) renderForlopp(); }, 500);
 }
 
