@@ -87,7 +87,7 @@ Konfiguration i en JSON-fil (`config.json`) så att låtar och klipp kan ändras
 
 `startMs` låter en låt starta direkt på refrängen/det kända partiet (skickas som `position_ms`).
 
-När Supabase är konfigurerat (`supabaseUrl`, `supabaseKey` i `config.json`) hämtas grenarna från tabellen `grenar` i Supabase i stället, och `config.json` används bara tills de hämtats första gången. I appen kan man då redigera en gren (grenvyn → **Redigera gren**: namn, säsong, beskrivning, meningen och låt via Spotify-länk) och ändra grenarnas ordning genom att dra dem på översikten (**Ändra ordning**). Alla ändringar kräver samma PIN-kod. Se `docs/SUPABASE.md`.
+När Supabase är konfigurerat (`supabaseUrl`, `supabaseKey` i `config.json`) hämtas grenarna från tabellen `grenar` i Supabase i stället, och `config.json` används bara tills de hämtats första gången. I appen kan man då redigera en gren (grenvyn → **Redigera gren**: namn, säsong, beskrivning, meningen, låt via Spotify-länk, starttid och timerns standardtid) och ändra grenarnas ordning genom att dra dem på översikten (**Ändra ordning**). Alla ändringar kräver samma PIN-kod. Se `docs/SUPABASE.md`.
 
 ### Förvalda låtar
 
@@ -114,7 +114,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 ### 1. Översikt (huvudvy)
 - Rubrik: "OS · Thomas 50 år / Onyktra Spelen", räknare "Gren 3/7".
 - **Spelas nu-kort**: låtnamn, artist, förlopp, knappar föregående/paus/nästa, reglage "Sänk vid klipp" (på/av + nivå), "Tona ut" (fade till 0 på 3 s, sedan paus).
-- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning och låt; den senast öppnade grenen markeras som "pågår". Tryck → öppnar grenvyn. Musiken startas inte automatiskt; grenens låt startas manuellt med play-knappen i grenvyn, och det som redan spelar får fortsätta.
+- **Grenlista**: 7 rader med nummer, namn, säsong (Sommar/Vinter), beskrivning och låt; den senast öppnade grenen markeras som "pågår". Tryck → öppnar grenvyn. Musiken startas inte automatiskt; grenens låt startas manuellt med play-knappen i grenvyn, och det som redan spelar får fortsätta. Grenens låt upprepas (loopar) tills man byter låt.
 - **Effektknappar**: rutnät 3×2, spelas direkt vid tryck (flera kan överlappa).
 - Sidfot: nätstatus.
 
