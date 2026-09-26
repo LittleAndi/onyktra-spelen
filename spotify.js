@@ -342,6 +342,7 @@ export async function spela(uris, { index = 0, startMs = 0 } = {}) {
 }
 
 export const vaxlaPaus = () => player?.togglePlay();
+export const pausa = () => player?.pause();
 export const foregaende = () => player?.previousTrack();
 export const nasta = () => player?.nextTrack();
 
@@ -349,15 +350,17 @@ let volym = 1;
 let toning = 0;
 
 // Stegar spelarens volym till mal (0–1) under ms millisekunder. En ny toning avbryter den förra.
+// Ger true om toningen gick klart, false om den avbröts.
 export async function tonaVolym(mal, ms = 300) {
   const nr = ++toning;
   const fran = volym;
-  if (fran === mal) return;
+  if (fran === mal) return true;
   const steg = Math.max(1, Math.round(ms / 50));
   for (let i = 1; i <= steg; i++) {
-    if (nr !== toning) return;
+    if (nr !== toning) return false;
     volym = fran + (mal - fran) * (i / steg);
     await player?.setVolume(volym).catch(() => {});
     if (i < steg) await vanta(50);
   }
+  return nr === toning;
 }

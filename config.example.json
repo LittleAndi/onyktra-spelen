@@ -4,6 +4,8 @@
   "duckLevel": 0.3,
   "klippVolym": 1,
   "timerSekunder": 60,
+  "timerStartEffekt": "visselpipa",
+  "timerSlutEffekt": "gong",
   "grenar": [
     {
       "id": "hockey",

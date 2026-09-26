@@ -120,6 +120,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 - Tillbaka till översikt, "Gren X av 7".
 - Stort grennamn, regeltext, ev. meningen (boxning) i stor text så den kan läsas upp.
 - **Timer**: valfri nedräkning (standard 60 s), Start/Återställ; spelar "startskott" vid start och "gong" vid 0 (konfigurerbart).
+  Konfigureras med `timerSekunder`, `timerStartEffekt` och `timerSlutEffekt` i `config.json` (globalt eller per gren). Tiden kan justeras ±15 s innan start.
 - Musikkort: play/paus, "Tona ut" (fade till 0 på 3 s, sedan paus).
 - Grenens effektknappar (från `effekter` i config) + alla övriga i en mindre rad.
 - "Markera klar & nästa gren".

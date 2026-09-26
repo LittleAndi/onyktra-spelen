@@ -96,5 +96,65 @@
     <button class="link-btn" type="button" id="nollstall">Nollställ grenar</button>
   </footer>
 </main>
+<main class="screen" id="grenvy" hidden>
+  <div class="topbar">
+    <button class="back" type="button" id="tillbaka">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>Alla grenar
+    </button>
+    <small id="g-nummer">Gren – av –</small>
+  </div>
+
+  <header class="hero">
+    <span class="tag" id="g-sasong"></span>
+    <h1 id="g-namn"></h1>
+    <p id="g-regel"></p>
+  </header>
+
+  <div class="phrase" id="g-mening-kort" hidden>
+    <small>Meningen</small>
+    <div id="g-mening"></div>
+  </div>
+
+  <section class="card timer-kort" aria-label="Timer">
+    <div class="timer-rad">
+      <button class="icon-btn" type="button" id="t-minus" aria-label="15 sekunder kortare">−15</button>
+      <div class="timer" id="t-tid" role="timer" aria-live="off">01:00</div>
+      <button class="icon-btn" type="button" id="t-plus" aria-label="15 sekunder längre">+15</button>
+    </div>
+    <div class="row">
+      <button class="btn-action" type="button" id="t-start">Starta</button>
+      <button class="btn-ghost" type="button" id="t-aterstall">Återställ</button>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Musik">
+    <div class="np">
+      <div class="art" id="g-nr">–</div>
+      <div class="np-meta">
+        <div class="np-title" id="g-titel"></div>
+        <div class="np-artist" id="g-artist"></div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="play play-sm" type="button" id="g-spela" aria-label="Spela" disabled>
+        <svg class="ikon-spela" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg>
+        <svg class="ikon-paus" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="5" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="19"/></svg>
+      </button>
+      <button class="btn-ghost grow" type="button" id="g-tona" disabled>Tona ut</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Effekter</h2><span>För grenen</span></div>
+    <div class="pads" id="g-effekter"></div>
+    <div class="pads pads-sma" id="g-ovriga" aria-label="Övriga effekter"></div>
+  </section>
+
+  <button class="btn-action btn-stor" type="button" id="g-klar">Klar – nästa gren</button>
+  <button class="next" type="button" id="g-nasta" hidden>
+    <span><b id="g-nasta-namn"></b> <small>· nästa</small></span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA6B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+</main>
 </body>
 </html>
