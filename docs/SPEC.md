@@ -44,7 +44,7 @@ Service workern körs i telefonens webbläsare, inte på någon server, och fung
 - **Install**: förcacha appens filer (`index.html`, JS, CSS, `config.json`, typsnitt) och alla klipp i `config.json` → `effekter[].fil`. Cachenamn med version, t.ex. `onyktra-v1`.
 - **Activate**: ta bort cacher med annat versionsnamn.
 - **Fetch**: cache-first för appfiler och klipp; nätet som reserv. Anrop till Spotify (`*.spotify.com`, `*.scdn.co`) och Google Fonts-API:t släpps alltid igenom till nätet och cachas inte.
-- **Ny version**: höj versionsnumret i `sw.js` när klipp eller appfiler ändras. Visa en banner "Ny version – ladda om" när en ny service worker väntar.
+- **Ny version**: versionen i `sw.js` sätts vid driftsättning till en hash av de publicerade filerna (ingen manuell höjning). Appen letar efter ny version vid start och när den visas igen. Står man på startvyn laddas den nya versionen in direkt; annars visas en banner "Ny version – ladda om".
 - **Status i UI**: startvyn visar om appen är redo offline (alla filer cachade).
 - **`manifest.webmanifest`**: namn "Onyktra Spelen", kortnamn "OS", `display: standalone`, bakgrund/tema `#0F1620`, ikoner 192 och 512 px.
 - Kräver HTTPS (GitHub Pages har det).

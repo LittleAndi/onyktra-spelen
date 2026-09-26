@@ -44,6 +44,14 @@ jobs:
           mv _site/config.tmp _site/config.json
           echo "spotifyClientId satt i config.json"
 
+      # Ny cacheversion i sw.js när någon publicerad fil ändrats → telefonen hämtar den nya versionen.
+      - name: Sätt service worker-version
+        run: |
+          hash=$(cd _site && find . -type f ! -name sw.js -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-12)
+          grep -q "'onyktra-dev'" _site/sw.js || { echo "Hittar inte 'onyktra-dev' i sw.js"; exit 1; }
+          sed -i "s/'onyktra-dev'/'onyktra-$hash'/" _site/sw.js
+          echo "Service worker-version: onyktra-$hash"
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

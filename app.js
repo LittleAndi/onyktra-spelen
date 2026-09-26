@@ -24,6 +24,8 @@ let duckad = false;
 let tonarUt = false;
 let aktivGren = null; // id för grenen som visas i grenvyn
 let bannerTimer;
+let startKlar; // anropas när init (inkl. ev. Spotify-inloggning) är klar
+const startKlarLofte = new Promise((klar) => { startKlar = klar; });
 
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -546,7 +548,13 @@ async function renderOfflineStatus() {
   }
 }
 
-function visaNyVersion(worker) {
+// På startvyn uppdateras appen direkt; mitt i tävlingen visas en knapp så att inget avbryts.
+async function visaNyVersion(worker) {
+  await startKlarLofte; // Ladda inte om mitt i en Spotify-inloggning.
+  if (!$('start').hidden) {
+    worker.postMessage({ typ: 'aktivera' });
+    return;
+  }
   const knapp = $('ny-version');
   knapp.hidden = false;
   knapp.onclick = () => {
@@ -574,6 +582,10 @@ async function initServiceWorker() {
         if (ny.state === 'installed' && navigator.serviceWorker.controller) visaNyVersion(ny);
         if (ny.state === 'activated' || ny.state === 'redundant') renderOfflineStatus();
       });
+    });
+    // En hemskärmsapp kan ligga i bakgrunden länge – leta efter ny version när den visas igen.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
     });
   } catch (fel) {
     console.error(fel);
@@ -726,4 +738,4 @@ async function init() {
   await initSpotify();
 }
 
-init();
+init().finally(startKlar);
