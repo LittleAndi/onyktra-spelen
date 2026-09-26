@@ -10,6 +10,7 @@ const APPFILER = [
   'app.js',
   'audio.js',
   'spotify.js',
+  'latar.js',
   'style.css',
   'config.json',
   'manifest.webmanifest',

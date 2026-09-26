@@ -323,3 +323,18 @@ h2 {
 .play-sm { width: 52px; height: 52px; border-radius: 26px; flex-shrink: 0; }
 .btn-stor { flex: none; width: 100%; min-height: 56px; font-size: 17px; }
 
+
+/* Byt låt */
+.dialog {
+  width: calc(100% - 32px); max-width: 448px;
+  padding: 20px 16px; border-radius: 16px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+}
+.dialog::backdrop { background: rgb(0 0 0 / .6); }
+.dialog-form { display: flex; flex-direction: column; gap: 14px; }
+.dialog .falt input { background: var(--bg); }
+.falt small { font-size: 12px; color: var(--muted); }
+.falt small.ok { color: var(--ice); }
+.falt small.fel-text { color: var(--warn); }
+.dialog .row .btn-ghost { flex: 1; }
+.dialog .link-btn { align-self: center; }

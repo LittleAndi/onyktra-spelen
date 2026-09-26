@@ -2,11 +2,13 @@
 
 import * as spotify from './spotify.js';
 import * as ljud from './audio.js';
+import * as latar from './latar.js';
 
 const AKTUELL_KEY = 'os.aktuellGren';
 const GAMMAL_STATUS_KEY = 'os.grenstatus';
 const DUCKING_KEY = 'os.ducking';
 const KLIENTID_KEY = 'os.clientId';
+const PIN_KEY = 'os.pin';
 const TRACK_URI = /^spotify:track:[A-Za-z0-9]{22}$/;
 
 const SASONG_TEXT = { sommar: 'Sommar', vinter: 'Vinter' };
@@ -17,6 +19,7 @@ const ICON_PIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" st
 const $ = (id) => document.getElementById(id);
 
 let config;
+let grundGrenar; // grenarna som de står i config.json, utan låtbyten
 let aktuellGren = null; // id för grenen som senast öppnades
 let spelarStatus = null;
 let klippStatus = null; // { laddade, totalt, fel } när förladdningen är klar
@@ -270,6 +273,146 @@ async function laddaConfig() {
   const svar = await fetch('config.json', { cache: 'no-cache' });
   if (!svar.ok) throw new Error(`config.json: ${svar.status}`);
   return svar.json();
+}
+
+// --- Låtbyten (Supabase) ---
+
+// Lägger låtbytena ovanpå grenarna från config.json.
+function tillampaLatar(rader) {
+  const byten = new Map(rader.map((r) => [r.gren_id, r]));
+  config.grenar = grundGrenar.map((gren) => {
+    const byte = byten.get(gren.id);
+    if (!byte) return gren;
+    return { ...gren, spotifyUri: byte.spotify_uri, lat: byte.lat ?? '', artist: byte.artist ?? '', startMs: byte.start_ms ?? 0, bytt: true };
+  });
+  render();
+}
+
+async function hamtaLatar() {
+  if (!latar.arKonfigurerad() || !navigator.onLine) return;
+  try {
+    tillampaLatar(await latar.hamta());
+  } catch (fel) {
+    console.warn('Kunde inte hämta låtbyten:', fel);
+  }
+}
+
+function tolkaTid(text) {
+  const traff = text.trim().match(/^(?:(\d+):)?(\d+)$/);
+  if (!traff) return text.trim() ? null : 0;
+  return ((Number(traff[1] ?? 0) * 60) + Number(traff[2])) * 1000;
+}
+
+function visaBytFel(text) {
+  $('bl-fel').textContent = text ?? '';
+  $('bl-fel').hidden = !text;
+}
+
+function sattLankInfo(text, klass = '') {
+  $('bl-lank-info').textContent = text;
+  $('bl-lank-info').className = klass;
+}
+
+function oppnaBytLat() {
+  const gren = hittaGren(aktivGren);
+  $('bl-rubrik').textContent = `Byt låt – ${gren.namn}`;
+  $('bl-lank').value = '';
+  $('bl-lat').value = gren.lat ?? '';
+  $('bl-artist').value = gren.artist ?? '';
+  $('bl-start').value = formateraTid(gren.startMs ?? 0);
+  $('bl-pin').value = '';
+  $('bl-pin-falt').hidden = Boolean(lasLagrat(PIN_KEY, ''));
+  $('bl-aterstall').hidden = !gren.bytt;
+  sattLankInfo('Spotify → Dela → Kopiera länk');
+  visaBytFel(null);
+  $('byt-lat').showModal();
+}
+
+// Hämtar låtnamn och artist när en giltig länk klistras in.
+let lankUppslag = 0;
+async function lankAndrad() {
+  const text = $('bl-lank').value;
+  const uri = latar.tolkaSpotifyLank(text);
+  if (!text.trim()) {
+    sattLankInfo('Spotify → Dela → Kopiera länk');
+    return;
+  }
+  if (!uri) {
+    sattLankInfo('Känns inte igen som en Spotify-låt.', 'fel-text');
+    return;
+  }
+  sattLankInfo('Hämtar låtinfo…');
+  const nr = ++lankUppslag;
+  try {
+    const { lat, artist } = await spotify.hamtaLat(uri);
+    if (nr !== lankUppslag) return;
+    $('bl-lat').value = lat;
+    $('bl-artist').value = artist;
+    sattLankInfo('Låt hittad ✓', 'ok');
+  } catch (fel) {
+    if (nr !== lankUppslag) return;
+    console.warn(fel);
+    sattLankInfo('Kunde inte hämta låtinfo – fyll i låt och artist själv.');
+  }
+}
+
+async function sparaBytLat(aterstall = false) {
+  const gren = hittaGren(aktivGren);
+  const lank = $('bl-lank').value.trim();
+  const uri = aterstall ? null : (lank ? latar.tolkaSpotifyLank(lank) : gren.spotifyUri);
+  const startMs = tolkaTid($('bl-start').value);
+  if (!aterstall && !TRACK_URI.test(uri ?? '')) {
+    visaBytFel('Klistra in en länk till en Spotify-låt.');
+    return;
+  }
+  if (!aterstall && startMs == null) {
+    visaBytFel('Skriv starttiden som m:ss, t.ex. 0:42.');
+    return;
+  }
+  const pin = lasLagrat(PIN_KEY, '') || $('bl-pin').value.trim();
+  if (!pin) {
+    $('bl-pin-falt').hidden = false;
+    visaBytFel('Ange PIN-koden.');
+    $('bl-pin').focus();
+    return;
+  }
+  visaBytFel(null);
+  for (const id of ['bl-spara', 'bl-aterstall']) $(id).disabled = true;
+  try {
+    const rader = await latar.spara(pin, {
+      grenId: gren.id,
+      spotifyUri: uri,
+      lat: $('bl-lat').value.trim() || null,
+      artist: $('bl-artist').value.trim() || null,
+      startMs,
+    });
+    sparaLagrat(PIN_KEY, pin);
+    tillampaLatar(rader);
+    $('byt-lat').close();
+    visaBanner(aterstall ? `${gren.namn} har fått sin förvalda låt igen.` : `Ny låt sparad för ${gren.namn}.`);
+  } catch (fel) {
+    if (fel.felPin) {
+      sparaLagrat(PIN_KEY, '');
+      $('bl-pin-falt').hidden = false;
+      $('bl-pin').value = '';
+    }
+    visaBytFel(fel.message);
+  } finally {
+    for (const id of ['bl-spara', 'bl-aterstall']) $(id).disabled = false;
+  }
+}
+
+function initBytLat() {
+  if (!latar.arKonfigurerad()) return;
+  $('g-byt-lat').hidden = false;
+  $('g-byt-lat').addEventListener('click', oppnaBytLat);
+  $('bl-lank').addEventListener('input', lankAndrad);
+  $('bl-avbryt').addEventListener('click', () => $('byt-lat').close());
+  $('bl-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    sparaBytLat();
+  });
+  $('bl-aterstall').addEventListener('click', () => sparaBytLat(true));
 }
 
 // --- Aktiv gren ---
@@ -714,6 +857,8 @@ async function init() {
     visaFel('Kunde inte läsa config.json. Kontrollera att filen finns och är giltig JSON.');
     return;
   }
+  grundGrenar = config.grenar;
+  latar.konfigurera({ url: config.supabaseUrl, key: config.supabaseKey });
 
   aktuellGren = lasLagrat(AKTUELL_KEY, null);
   try { localStorage.removeItem(GAMMAL_STATUS_KEY); } catch { /* Lagring otillgänglig. */ }
@@ -728,10 +873,14 @@ async function init() {
 
   renderDucking();
   renderEffekter();
-  render();
+  if (latar.arKonfigurerad()) tillampaLatar(latar.cachade());
+  else render();
 
   initStart();
   initGrenvy();
+  initBytLat();
+  hamtaLatar();
+  window.addEventListener('online', hamtaLatar);
   laddaKlipp();
   window.addEventListener('online', renderStart);
   window.addEventListener('offline', renderStart);
