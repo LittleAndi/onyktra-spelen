@@ -315,7 +315,6 @@ function renderStart() {
   $('logga-in').hidden = inloggad;
   $('starta').hidden = !inloggad;
   $('logga-ut').hidden = !inloggad;
-  $('utan-spotify').hidden = false;
   if (!inloggad) {
     sattRad('start-konto', 'Ej inloggad');
     sattRad('start-spelare', 'Ej ansluten');
@@ -388,10 +387,6 @@ function initStart() {
   $('klientid').addEventListener('input', (e) => sparaLagrat(KLIENTID_KEY, e.target.value.trim()));
   $('logga-in').addEventListener('click', loggaIn);
   $('starta').addEventListener('click', startaAppen);
-  $('utan-spotify').addEventListener('click', () => {
-    ljud.lasUpp().catch((fel) => console.warn('Kunde inte låsa upp ljud:', fel));
-    visaVy('oversikt');
-  });
   $('logga-ut').addEventListener('click', () => {
     spotify.loggaUt();
     sattTransport(false);
