@@ -96,13 +96,8 @@ async function spelaGren(gren) {
   }
 }
 
-// Spelar musik eller ett klipp just nu? Då ska det få fortsätta.
-function ljudSpelar() {
-  return duckad || (spelarStatus != null && !spelarStatus.pausad && !tonarUt);
-}
-
 // Att starta en gren sätter den som "pågår" och den som pågick som "klar".
-// Grenens låt startas bara om inget annat spelar – annars trycker man play själv.
+// Musiken startas aldrig automatiskt – man trycker play i grenvyn själv.
 function startaGren(id) {
   spotify.aktivera();
   for (const [annan, s] of Object.entries(status)) {
@@ -111,7 +106,6 @@ function startaGren(id) {
   status[id] = 'pagar';
   sparaLagrat(STATUS_KEY, status);
   render();
-  if (!ljudSpelar()) spelaGren(hittaGren(id));
 }
 
 const hittaGren = (id) => config.grenar.find((g) => g.id === id);
