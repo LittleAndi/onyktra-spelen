@@ -21,7 +21,7 @@ Webbapp för att styra musik och ljudeffekter under tävlingsdelen på Thomas 50
 
 - **En statisk sida**: HTML + vanilla JS (eller Vite + TS om det underlättar). Inga ramverk krävs.
 - **Hosting**: HTTPS, t.ex. GitHub Pages. Redirect-URI registreras i Spotify Developer Dashboard.
-- **Spotify-inloggning**: Authorization Code med PKCE, helt i klienten. Scopes: `streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state`.
+- **Spotify-inloggning**: Authorization Code med PKCE, helt i klienten. Scopes: `streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private playlist-read-collaborative` (de två sista för Musik-vyns spellista; den som loggade in innan de lades till måste logga ut och in igen).
 - **Uppspelning**: Spotify Web Playback SDK – sidan blir en egen Spotify Connect-enhet. Efter `ready`: flytta uppspelning till enheten via `PUT /v1/me/player` och starta låt via `PUT /v1/me/player/play?device_id=…` med `uris`.
 - **Ljudklipp**: Web Audio API. Klippen förladdas och avkodas till `AudioBuffer` vid start, så de spelar direkt och fungerar utan nät.
 - **Ducking**: vid klippstart `player.setVolume(duckLevel)` (standard 0.3), återställ när klippet slutat (kort fade, ca 300 ms, genom att stega volymen).
@@ -85,6 +85,8 @@ Konfiguration i en JSON-fil (`config.json`) så att låtar och klipp kan ändras
 }
 ```
 
+`spellista` (valfri) är en Spotify-länk eller URI till spellistan i Musik-vyn, t.ex. `"https://open.spotify.com/playlist/…"`. Den kan också väljas i appen (sparas då i telefonens `localStorage` och gäller före `config.json`).
+
 `startMs` låter en låt starta direkt på refrängen/det kända partiet (skickas som `position_ms`).
 
 När Supabase är konfigurerat (`supabaseUrl`, `supabaseKey` i `config.json`) hämtas grenarna från tabellen `grenar` i Supabase i stället, och `config.json` används bara tills de hämtats första gången. I appen kan man då redigera en gren (grenvyn → **Redigera gren**: namn, säsong, beskrivning, meningen, låt via Spotify-länk, starttid, nedräkning eller tidtagning och timerns standardtid) och ändra grenarnas ordning genom att dra dem på översikten (**Ändra ordning**). Alla ändringar kräver samma PIN-kod. Se `docs/SUPABASE.md`.
@@ -128,6 +130,13 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 - Alla effektknappar, samma uppsättning och ordning som i översikten.
 - "Nästa gren" (på sista grenen: tillbaka till översikten).
 
+### 3. Musik
+- Nås från raden **Musik** på översikten (mellan grenlistan och effektknapparna). Tillbaka till översikten med knappen eller telefonens bakåtknapp.
+- Visar spellistans namn och låtar, hämtade från Spotify (`GET /v1/playlists/{id}` och `/items`, sidindelat). Senast hämtade lista sparas i `localStorage` så att den syns även utan nät.
+- Tryck på en låt → spellistan spelas från den låten (`context_uri` + `offset.uri`) och fortsätter med resten; hela listan upprepas. "Blanda" slår på/av blandning. Spelas nu-kort med föregående/paus/nästa och "Tona ut", samt alla effektknappar (med ducking som vanligt).
+- När en gren startar sin låt stängs blandningen av och grenens låt upprepas som förut.
+- **Byt spellista**: klistra in en Spotify-länk (Dela → Kopiera länk). Spellistan måste vara ägd av eller delad med det inloggade kontot (Spotifys utvecklarläge).
+
 ## Beteende
 
 - Att öppna en gren gör den till aktuell ("pågår", räknaren i rubriken). Vilka grenar som är klara hålls inte reda på. Aktuell gren sparas i `localStorage` så att en omladdning inte tappar bort var kvällen är.
@@ -148,6 +157,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 /app.js          – UI och state
 /spotify.js      – PKCE, token, Web Playback SDK, API-anrop
 /grenar.js       – grenar i Supabase
+/musik.js        – vald spellista och sparad kopia av den
 /audio.js        – Web Audio, förladdning, ducking
 /config.json
 /clips/*.mp3

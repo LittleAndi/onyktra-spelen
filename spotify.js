@@ -1,6 +1,6 @@
 // Spotify: PKCE-inloggning, token, Web Playback SDK och API-anrop.
 
-const SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+const SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private playlist-read-collaborative';
 const TOKEN_KEY = 'os.spotify.token';
 const VERIFIER_KEY = 'os.spotify.verifier';
 const STATE_KEY = 'os.spotify.state';
@@ -80,6 +80,8 @@ async function tokenAnrop(parametrar) {
     // Spotify kan rotera refresh-token; behåll den gamla om ingen ny skickas.
     refresh: data.refresh_token ?? token?.refresh,
     utgar: Date.now() + data.expires_in * 1000,
+    // Beviljade scopes; en förnyelse utan scope behåller de tidigare.
+    scope: data.scope ?? token?.scope ?? '',
   };
   sparaToken();
   schemalaggFornyelse();
@@ -122,6 +124,9 @@ export function konfigurera({ clientId: id, redirectUri: uri }) {
 }
 
 export const arInloggad = () => token != null;
+
+// Inloggningar från före spellistorna saknar läsrätt till privata spellistor – då behövs ny inloggning.
+export const harScope = (scope) => token?.scope == null || token.scope.split(' ').includes(scope);
 
 export async function loggaIn() {
   if (!clientId) throw new SpotifyFel('Spotify client ID saknas.');
@@ -191,7 +196,8 @@ export function loggaUt() {
 // --- Web API ---
 
 async function api(metod, sokvag, kropp, forsok = 0) {
-  const svar = await fetch(API + sokvag, {
+  // Sökvägen kan också vara en hel adress, t.ex. next-länken i en sidindelad lista.
+  const svar = await fetch(sokvag.startsWith('https://') ? sokvag : API + sokvag, {
     method: metod,
     headers: {
       Authorization: `Bearer ${await hamtaAccessToken()}`,
@@ -218,6 +224,46 @@ export function hamtaProfil() {
 export async function hamtaLat(uri) {
   const lat = await api('GET', `/tracks/${encodeURIComponent(uri.split(':').pop())}`);
   return { lat: lat.name, artist: lat.artists?.map((a) => a.name).join(', ') ?? '' };
+}
+
+function tillLat(lat) {
+  // Lokala filer och poddavsnitt kan inte spelas via Web API.
+  if (!lat || lat.type !== 'track' || lat.is_local || !lat.uri) return null;
+  return {
+    uri: lat.uri,
+    titel: lat.name ?? '',
+    artist: lat.artists?.map((a) => a.name).join(', ') ?? '',
+    langd: lat.duration_ms ?? 0,
+  };
+}
+
+async function hamtaSidor(forsta) {
+  const latar = [];
+  let sida = await api('GET', forsta);
+  for (;;) {
+    for (const rad of sida?.items ?? []) {
+      // Nyare API-svar lägger låten i item, äldre i track.
+      const lat = tillLat(rad.item ?? rad.track);
+      if (lat) latar.push(lat);
+    }
+    if (!sida?.next) return latar;
+    sida = await api('GET', sida.next);
+  }
+}
+
+// Spellistans namn och låtar. id är spellistans Spotify-id.
+export async function hamtaSpellista(id) {
+  const del = encodeURIComponent(id);
+  const lista = await api('GET', `/playlists/${del}?fields=name,uri`);
+  let latar;
+  try {
+    latar = await hamtaSidor(`/playlists/${del}/items?limit=50`);
+  } catch (fel) {
+    // Äldre API utan /items – använd /tracks.
+    if (fel.status !== 404) throw fel;
+    latar = await hamtaSidor(`/playlists/${del}/tracks?limit=50`);
+  }
+  return { namn: lista.name ?? '', uri: lista.uri ?? `spotify:playlist:${id}`, latar };
 }
 
 // --- Web Playback SDK ---
@@ -248,6 +294,7 @@ function tolkaStatus(s) {
     langd: s.duration,
     position: s.position,
     pausad: s.paused,
+    kontext: s.context?.uri ?? null,
     tid: performance.now(),
   };
 }
@@ -336,9 +383,7 @@ async function ateranslut() {
 
 export const arAnsluten = () => deviceId != null;
 
-// Spelar listan av låtar med början på index, från startMs. Låten upprepas tills man byter.
-export async function spela(uris, { index = 0, startMs = 0 } = {}) {
-  const kropp = { uris, offset: { position: index }, position_ms: startMs };
+async function spelaPaEnhet(kropp, upprepa) {
   let id = deviceId ?? await ateranslut();
   try {
     await api('PUT', `/me/player/play?device_id=${encodeURIComponent(id)}`, kropp);
@@ -348,10 +393,33 @@ export async function spela(uris, { index = 0, startMs = 0 } = {}) {
     await api('PUT', `/me/player/play?device_id=${encodeURIComponent(id)}`, kropp);
   }
   try {
-    await api('PUT', `/me/player/repeat?state=track&device_id=${encodeURIComponent(id)}`);
+    await api('PUT', `/me/player/repeat?state=${upprepa}&device_id=${encodeURIComponent(id)}`);
   } catch (fel) {
-    console.warn('Kunde inte slå på upprepning:', fel);
+    console.warn('Kunde inte ställa in upprepning:', fel);
   }
+  return id;
+}
+
+// Spelar listan av låtar med början på index, från startMs. Låten upprepas tills man byter.
+export async function spela(uris, { index = 0, startMs = 0 } = {}) {
+  const id = await spelaPaEnhet({ uris, offset: { position: index }, position_ms: startMs }, 'track');
+  // Grenens låt ska spelas som den är, även om spellistan spelades blandad.
+  api('PUT', `/me/player/shuffle?state=false&device_id=${encodeURIComponent(id)}`)
+    .catch((fel) => console.warn('Kunde inte stänga av blandning:', fel));
+}
+
+// Spelar en spellista från låten latUri (eller början). Hela listan upprepas.
+export async function spelaSpellista(spellistaUri, { latUri, blanda = false } = {}) {
+  const id = deviceId ?? await ateranslut();
+  // Blandning ställs in före start så att den gäller direkt.
+  await api('PUT', `/me/player/shuffle?state=${blanda}&device_id=${encodeURIComponent(id)}`).catch(() => {});
+  await spelaPaEnhet({ context_uri: spellistaUri, ...(latUri && { offset: { uri: latUri } }) }, 'context');
+}
+
+// Slår på eller av blandning för det som spelas.
+export function blanda(pa) {
+  if (!deviceId) return Promise.resolve();
+  return api('PUT', `/me/player/shuffle?state=${pa}&device_id=${encodeURIComponent(deviceId)}`);
 }
 
 export const vaxlaPaus = () => player?.togglePlay();

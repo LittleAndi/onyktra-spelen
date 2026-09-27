@@ -3,11 +3,13 @@
 import * as spotify from './spotify.js';
 import * as ljud from './audio.js';
 import * as grenar from './grenar.js';
+import * as musik from './musik.js';
 
 const AKTUELL_KEY = 'os.aktuellGren';
 const GAMMAL_STATUS_KEY = 'os.grenstatus';
 const DUCKING_KEY = 'os.ducking';
 const KLIENTID_KEY = 'os.clientId';
+const BLANDA_KEY = 'os.blanda';
 const GAMMAL_PIN_KEY = 'os.pin';
 const TRACK_URI = /^spotify:track:[A-Za-z0-9]{22}$/;
 
@@ -30,6 +32,8 @@ let aktivGren = null; // id för grenen som visas i grenvyn
 let bannerTimer;
 let pinKod = ''; // PIN-koden hålls bara i minnet, sparas aldrig i localStorage
 let ordnar = null; // gren-id:n i ny ordning medan man ändrar ordning, annars null
+let spellista = null; // { id, namn, uri, latar } för spellistan i Musik-vyn
+let spellistaStatus = ''; // 'laddar', ett felmeddelande eller ''
 let startKlar; // anropas när init (inkl. ev. Spotify-inloggning) är klar
 const startKlarLofte = new Promise((klar) => { startKlar = klar; });
 
@@ -130,26 +134,32 @@ function renderSpelasNu() {
   const spelar = spelarStatus != null && !spelarStatus.pausad;
   $('spela').classList.toggle('spelar', spelar);
   $('spela').setAttribute('aria-label', spelar ? 'Pausa' : 'Spela');
+  renderMusikKort();
   renderTona();
   renderForlopp();
 }
 
+// Förloppet i översiktens (np) och Musik-vyns (m) spelas nu-kort.
 function renderForlopp() {
-  if (!spelarStatus?.langd) {
-    $('np-tid').textContent = '0:00';
-    $('np-langd').textContent = '–:––';
-    $('np-bar').style.width = '0';
-    return;
+  for (const p of ['np', 'm']) {
+    if (!spelarStatus?.langd) {
+      $(`${p}-tid`).textContent = '0:00';
+      $(`${p}-langd`).textContent = '–:––';
+      $(`${p}-bar`).style.width = '0';
+      continue;
+    }
+    const { langd, position, pausad, tid } = spelarStatus;
+    const nu = Math.min(langd, position + (pausad ? 0 : performance.now() - tid));
+    $(`${p}-tid`).textContent = formateraTid(nu);
+    $(`${p}-langd`).textContent = formateraTid(langd);
+    $(`${p}-bar`).style.width = `${(nu / langd) * 100}%`;
   }
-  const { langd, position, pausad, tid } = spelarStatus;
-  const nu = Math.min(langd, position + (pausad ? 0 : performance.now() - tid));
-  $('np-tid').textContent = formateraTid(nu);
-  $('np-langd').textContent = formateraTid(langd);
-  $('np-bar').style.width = `${(nu / langd) * 100}%`;
 }
 
 function sattTransport(pa) {
-  for (const id of ['foregaende', 'spela', 'nasta', 'tona', 'g-spela', 'g-tona']) $(id).disabled = !pa;
+  for (const id of ['foregaende', 'spela', 'nasta', 'tona', 'g-spela', 'g-tona', 'm-foregaende', 'm-spela', 'm-nasta', 'm-tona']) {
+    $(id).disabled = !pa;
+  }
 }
 
 function renderDucking() {
@@ -211,6 +221,7 @@ function effektKnapp(effekt) {
 function renderEffekter() {
   $('effekter').replaceChildren(...config.effekter.map(effektKnapp));
   $('g-effekter').replaceChildren(...config.effekter.map(effektKnapp));
+  $('m-effekter').replaceChildren(...config.effekter.map(effektKnapp));
   renderEffektStatus();
 }
 
@@ -264,6 +275,7 @@ function render() {
   renderSpelasNu();
   renderGrenar();
   if (aktivGren) renderGrenvy();
+  renderMusik();
 }
 
 function renderNatstatus() {
@@ -606,6 +618,196 @@ function initOrdning() {
   $('ordning-avbryt').addEventListener('click', avslutaOrdna);
 }
 
+// --- Musik (spellista från Spotify) ---
+
+const blandaPa = () => lasLagrat(BLANDA_KEY, false);
+const spelarSpellistan = () => spellista != null && spelarStatus?.kontext === spellista.uri;
+
+function spellistaInfo() {
+  if (spellistaStatus === 'laddar' && !spellista) return 'Hämtar spellistan…';
+  if (!spellista) return spellistaStatus || 'Ingen spellista vald';
+  const antal = `${spellista.latar.length} ${spellista.latar.length === 1 ? 'låt' : 'låtar'}`;
+  return spellistaStatus && spellistaStatus !== 'laddar' ? `${antal} · kunde inte uppdateras` : antal;
+}
+
+// Laddar den valda spellistan: först den sparade kopian, sedan från Spotify om det går.
+async function laddaSpellista() {
+  const id = musik.valdId(config);
+  if (!id) {
+    spellista = null;
+    spellistaStatus = '';
+    renderMusik();
+    return;
+  }
+  if (spellista?.id !== id) spellista = musik.cachad(id);
+  if (!spotify.arInloggad() || !navigator.onLine) {
+    spellistaStatus = spellista ? '' : 'Spellistan hämtas när Spotify är anslutet.';
+    renderMusik();
+    return;
+  }
+  spellistaStatus = 'laddar';
+  renderMusik();
+  try {
+    const hamtad = { id, ...(await spotify.hamtaSpellista(id)) };
+    if (musik.valdId(config) !== id) return; // En annan spellista valdes under tiden.
+    spellista = hamtad;
+    musik.sparaCache(hamtad);
+    spellistaStatus = '';
+  } catch (fel) {
+    console.warn('Kunde inte hämta spellistan:', fel);
+    if (musik.valdId(config) !== id) return;
+    if ((fel.status === 401 || fel.status === 403) && !spotify.harScope('playlist-read-private')) {
+      spellistaStatus = 'Logga ut och in igen på startsidan så att appen får läsa spellistor.';
+    } else if (fel.status === 403 || fel.status === 404) {
+      spellistaStatus = 'Spellistan hittades inte. Den måste vara din egen eller en du samarbetar på.';
+    } else {
+      spellistaStatus = `Kunde inte hämta spellistan: ${fel.message}`;
+    }
+  }
+  renderMusik();
+}
+
+function latRad(lat, i) {
+  const rad = el('button', { class: 'gren lat', type: 'button', 'data-uri': lat.uri },
+    el('span', { class: 'num' }, String(i + 1)),
+    el('span', { class: 'gtext' },
+      el('span', { class: 'gname' }, lat.titel),
+      el('span', { class: 'gdesc' }, lat.artist),
+    ),
+    el('span', { class: 'langd' }, formateraTid(lat.langd)),
+  );
+  rad.addEventListener('click', () => spelaFranSpellista(lat.uri));
+  return rad;
+}
+
+function renderMusik() {
+  $('musik-namn').textContent = spellista?.namn || 'Musik';
+  $('musik-info').textContent = spellistaInfo();
+
+  $('m-namn').textContent = spellista?.namn || 'Musik';
+  $('m-antal').textContent = spellista ? `${spellista.latar.length} låtar` : '';
+  const fel = spellistaStatus && spellistaStatus !== 'laddar' ? spellistaStatus : '';
+  $('m-info').textContent = fel || (spellista ? 'Tryck på en låt för att spela listan därifrån.' : '');
+  $('m-info').classList.toggle('fel-text', Boolean(fel));
+  $('m-byt').textContent = spellista || musik.valdId(config) ? 'Byt spellista' : 'Välj spellista';
+  $('m-uppdatera').hidden = !musik.valdId(config);
+  $('m-uppdatera').disabled = spellistaStatus === 'laddar';
+  $('m-uppdatera').textContent = spellistaStatus === 'laddar' ? 'Hämtar…' : 'Uppdatera';
+  $('m-blanda').setAttribute('aria-pressed', String(blandaPa()));
+
+  // Listan byggs bara om när spellistan ändrats, inte vid varje ny spelarstatus.
+  const lista = $('m-latar');
+  const version = spellista ? `${spellista.id}:${spellista.latar.map((l) => l.uri).join()}` : '';
+  if (lista.dataset.version !== version || !lista.childElementCount) {
+    lista.dataset.version = version;
+    if (spellista?.latar.length) lista.replaceChildren(...spellista.latar.map(latRad));
+    else if (spellista) lista.replaceChildren(el('div', { class: 'tom' }, 'Spellistan är tom.'));
+    else lista.replaceChildren(el('div', { class: 'tom' },
+      'Ingen spellista vald. Tryck på Välj spellista och klistra in en länk från Spotify (Dela → Kopiera länk).'));
+  }
+  renderMusikKort();
+}
+
+// Spelas nu-kortet i Musik-vyn och markeringen av låten som spelas.
+function renderMusikKort() {
+  const uris = spelarStatus?.uris ?? [];
+  const index = spellista?.latar.findIndex((l) => uris.includes(l.uri)) ?? -1;
+  $('m-nr').textContent = index >= 0 ? String(index + 1).padStart(2, '0') : '♪';
+  $('m-titel').textContent = spelarStatus?.titel || 'Ingen låt';
+  $('m-artist').textContent = spelarStatus?.titel ? spelarStatus.artist : 'Tryck på en låt i listan';
+  const spelar = spelarStatus != null && !spelarStatus.pausad;
+  $('m-spela').classList.toggle('spelar', spelar);
+  $('m-spela').setAttribute('aria-label', spelar ? 'Pausa' : 'Spela');
+  for (const rad of $('m-latar').querySelectorAll('.lat')) {
+    rad.classList.toggle('pagar', uris.includes(rad.dataset.uri));
+  }
+}
+
+async function spelaFranSpellista(latUri) {
+  spotify.aktivera();
+  if (!spellista) return;
+  if (!spotify.arInloggad()) {
+    visaBanner('Spotify är inte anslutet – ladda om sidan och logga in.');
+    return;
+  }
+  avbrytToning();
+  try {
+    await spotify.spelaSpellista(spellista.uri, { latUri, blanda: blandaPa() });
+  } catch (fel) {
+    console.error(fel);
+    visaBanner(`Kunde inte starta spellistan: ${fel.message}`);
+  }
+}
+
+// Play i Musik-vyn: pausar det som spelar, fortsätter spellistan eller startar den från början.
+function musikSpela() {
+  spotify.aktivera();
+  avbrytToning();
+  if (spelarSpellistan() || (spelarStatus && !spelarStatus.pausad)) spotify.vaxlaPaus();
+  else if (spellista?.latar.length) spelaFranSpellista(blandaPa() ? null : spellista.latar[0].uri);
+  else visaBanner('Välj en spellista först.');
+}
+
+function vaxlaBlanda() {
+  const pa = !blandaPa();
+  sparaLagrat(BLANDA_KEY, pa);
+  renderMusik();
+  if (spelarSpellistan()) {
+    spotify.blanda(pa).catch((fel) => visaBanner(`Kunde inte ändra blandning: ${fel.message}`));
+  }
+}
+
+function oppnaMusik() {
+  spotify.aktivera();
+  history.pushState({ vy: 'musik' }, '');
+  visaVy('musikvy');
+  renderMusik();
+  if (!spellista || spellistaStatus) laddaSpellista();
+}
+
+function stangMusik() {
+  if (history.state?.vy === 'musik') history.back();
+  else visaVy('oversikt');
+}
+
+function oppnaValjSpellista() {
+  $('sd-lank').value = '';
+  $('sd-fel').hidden = true;
+  $('spellista-dialog').showModal();
+}
+
+function valjSpellista() {
+  const id = musik.tolkaLank($('sd-lank').value);
+  if (!id) {
+    $('sd-fel').textContent = 'Klistra in en länk till en Spotify-spellista.';
+    $('sd-fel').hidden = false;
+    return;
+  }
+  musik.valj(id);
+  $('spellista-dialog').close();
+  laddaSpellista();
+}
+
+function initMusik() {
+  $('till-musik').addEventListener('click', oppnaMusik);
+  $('m-tillbaka').addEventListener('click', stangMusik);
+  $('m-spela').addEventListener('click', musikSpela);
+  $('m-foregaende').addEventListener('click', () => spotify.foregaende());
+  $('m-nasta').addEventListener('click', () => spotify.nasta());
+  $('m-tona').addEventListener('click', tonaUt);
+  $('m-blanda').addEventListener('click', vaxlaBlanda);
+  $('m-uppdatera').addEventListener('click', laddaSpellista);
+  $('m-byt').addEventListener('click', oppnaValjSpellista);
+  $('sd-avbryt').addEventListener('click', () => $('spellista-dialog').close());
+  $('sd-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    valjSpellista();
+  });
+  const id = musik.valdId(config);
+  spellista = id ? musik.cachad(id) : null;
+  renderMusik();
+}
+
 // --- Aktiv gren ---
 
 function oppnaGren(id, { ersatt = false } = {}) {
@@ -686,7 +888,7 @@ function renderGrenMusik() {
 }
 
 function renderTona() {
-  for (const id of ['tona', 'g-tona']) {
+  for (const id of ['tona', 'g-tona', 'm-tona']) {
     $(id).textContent = tonarUt ? 'Tonar ut…' : 'Tona ut';
     $(id).classList.toggle('aktiv', tonarUt);
   }
@@ -871,6 +1073,7 @@ function initGrenvy() {
   window.addEventListener('popstate', (e) => {
     if ($('start').hidden === false) return;
     if (e.state?.gren && hittaGren(e.state.gren)) oppnaGren(e.state.gren, { ersatt: true });
+    else if (e.state?.vy === 'musik') visaVy('musikvy');
     else visaVy('oversikt');
   });
 }
@@ -897,6 +1100,7 @@ function visaVy(id) {
   $('start').hidden = id !== 'start';
   $('oversikt').hidden = id !== 'oversikt';
   $('grenvy').hidden = id !== 'grenvy';
+  $('musikvy').hidden = id !== 'musikvy';
   if (id !== 'grenvy') aktivGren = null;
   window.scrollTo(0, 0);
 }
@@ -1050,6 +1254,7 @@ async function startaAppen() {
     sattRad('start-spelare', 'Ansluten ✓', 'ok');
     sattTransport(true);
     visaVy('oversikt');
+    if (!spellista?.latar.length || spellistaStatus) laddaSpellista();
   } catch (fel) {
     console.error(fel);
     sattRad('start-spelare', 'Fel', 'fel-text');
@@ -1069,6 +1274,7 @@ function initStart() {
   $('logga-ut').addEventListener('click', () => {
     spotify.loggaUt();
     sattTransport(false);
+    spellistaStatus = '';
     visaStartFel(null);
     renderStart();
   });
@@ -1094,6 +1300,7 @@ async function initSpotify() {
     return;
   }
   visaKonto();
+  laddaSpellista();
   // Ladda SDK:t i förväg så att Starta-trycket kan låsa upp ljudet direkt.
   spotify.forberedSpelare({ onStatus: spelarHandelse, onFel: visaBanner })
     .catch((fel) => visaStartFel(fel.message));
@@ -1121,7 +1328,7 @@ async function init() {
     localStorage.removeItem(GAMMAL_PIN_KEY);
   } catch { /* Lagring otillgänglig. */ }
   // Efter omladdning börjar appen på startvyn; släng en gammal grenpost i historiken.
-  if (history.state?.gren) history.replaceState(null, '');
+  if (history.state?.gren || history.state?.vy) history.replaceState(null, '');
 
   $('ducking').addEventListener('click', () => {
     sparaLagrat(DUCKING_KEY, !duckingPa());
@@ -1138,6 +1345,7 @@ async function init() {
   initGrenvy();
   initRedigera();
   initOrdning();
+  initMusik();
   hamtaGrenar();
   window.addEventListener('online', hamtaGrenar);
   laddaKlipp();
