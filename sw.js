@@ -11,6 +11,7 @@ const APPFILER = [
   'audio.js',
   'spotify.js',
   'grenar.js',
+  'musik.js',
   'style.css',
   'config.json',
   'manifest.webmanifest',

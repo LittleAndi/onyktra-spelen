@@ -5,6 +5,7 @@
   "supabaseKey": "DIN_PUBLISHABLE_KEY",
   "duckLevel": 0.3,
   "klippVolym": 1,
+  "spellista": "",
   "timerSekunder": 60,
   "timerStartEffekt": "visselpipa",
   "timerSlutEffekt": "gong",
