@@ -141,6 +141,7 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 
 - Att öppna en gren gör den till aktuell ("pågår", räknaren i rubriken). Vilka grenar som är klara hålls inte reda på. Aktuell gren sparas i `localStorage` så att en omladdning inte tappar bort var kvällen är.
 - Effektklipp: ny `AudioBufferSourceNode` per tryck, gemensam `GainNode` för klippvolym. Ducking aktiv så länge minst ett klipp spelar.
+- **Stoppa klipp**: effekter har `"lage"` i `config.json`. `"spam"` (visselpipan): varje tryck spelar klippet igen och det kan överlappa, inget stoppas. Standard (`"vaxla"`): ett nytt tryck på samma knapp stoppar klippet (fade ~150 ms, dubbeltryck de första ~300 ms ignoreras). Knappen som spelar visar ■, accentram, förloppsstapel och "N s kvar". Ett flytande "■ Stoppa ljud"-chip syns bara medan något klipp spelar och fadar ut alla klipp. Ducking återställs när sista klippet slutat eller stoppats.
 - Fel från Spotify (t.ex. 401/404 device) → försök förnya token / återansluta enheten automatiskt, visa en diskret banner.
 - Allt ska gå att styra med touch; knappar minst 44 px.
 
@@ -177,7 +178,8 @@ Mobil först (390 px bredd), mörkt tema. Designskiss: `docs/design/overview.htm
 4. Efter första besöket går appen att öppna och klippen att spela i flygplansläge, även efter omladdning.
 5. Omladdning av sidan behåller grenstatus.
 6. Sidan kan läggas på hemskärmen och öppnas i helskärm.
-7. Genrepetition: hela programmet körs igenom på festens telefon och högtalare.
+7. Ett längre klipp stoppas av ett nytt tryck på dess knapp; visselpipan kan spammas; "Stoppa ljud" stoppar allt och musiken återgår till full volym.
+8. Genrepetition: hela programmet körs igenom på festens telefon och högtalare.
 
 ## Förberedelser (manuellt)
 

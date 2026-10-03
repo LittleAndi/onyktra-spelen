@@ -68,6 +68,10 @@ export function lasUpp() {
 
 export const harKlipp = (id) => buffertar.has(id);
 
+const FADE_UT = 0.15; // sekunder – undviker knäpp när ett klipp stoppas
+const aktivaKallor = new Map(); // effekt-id → Set av { kalla, gain, start, langd }
+let nasta = 0;
+
 // Spelar ett klipp direkt; flera kan överlappa. onSlut anropas när just detta klipp är klart.
 export function spela(id, onSlut = () => {}) {
   const buffer = buffertar.get(id);
@@ -77,14 +81,21 @@ export function spela(id, onSlut = () => {}) {
 
   const kalla = kontext.createBufferSource();
   kalla.buffer = buffer;
-  kalla.connect(klippGain);
+  const gain = kontext.createGain();
+  kalla.connect(gain);
+  gain.connect(klippGain);
 
+  const post = { kalla, gain, start: kontext.currentTime, langd: buffer.duration, nr: nasta += 1 };
   let klar = false;
   const avsluta = () => {
     if (klar) return;
     klar = true;
     clearTimeout(reserv);
     kalla.disconnect();
+    gain.disconnect();
+    const grupp = aktivaKallor.get(id);
+    grupp?.delete(post);
+    if (grupp?.size === 0) aktivaKallor.delete(id);
     aktiva -= 1;
     if (aktiva === 0) onDucking(false);
     onSlut();
@@ -92,11 +103,53 @@ export function spela(id, onSlut = () => {}) {
   // Reserv om kontexten aldrig startar och onended uteblir – annars fastnar musiken sänkt.
   const reserv = setTimeout(avsluta, buffer.duration * 1000 + 1500);
   kalla.onended = avsluta;
+  post.avsluta = avsluta;
 
+  if (!aktivaKallor.has(id)) aktivaKallor.set(id, new Set());
+  aktivaKallor.get(id).add(post);
   aktiva += 1;
   if (aktiva === 1) onDucking(true);
   kalla.start();
   return true;
 }
 
+function tona(post) {
+  if (post.stoppad) return;
+  post.stoppad = true;
+  const nu = kontext.currentTime;
+  try {
+    post.gain.gain.cancelScheduledValues(nu);
+    post.gain.gain.setValueAtTime(post.gain.gain.value, nu);
+    post.gain.gain.linearRampToValueAtTime(0, nu + FADE_UT);
+    post.kalla.stop(nu + FADE_UT);
+  } catch {
+    post.avsluta();
+  }
+  // Om onended uteblir (pausad kontext) avslutas klippet ändå.
+  setTimeout(post.avsluta, FADE_UT * 1000 + 300);
+}
+
+// Stoppar alla pågående uppspelningar av ett klipp med en kort fade.
+export function stoppa(id) {
+  for (const post of aktivaKallor.get(id) ?? []) tona(post);
+}
+
+export function stoppaAlla() {
+  for (const grupp of aktivaKallor.values()) for (const post of grupp) tona(post);
+}
+
 export const spelarKlipp = () => aktiva > 0;
+
+// Pågående klipp: id → { antal, kvar (sekunder för det senast startade), langd }.
+export function aktivaKlipp() {
+  const nu = kontext?.currentTime ?? 0;
+  const ut = new Map();
+  for (const [id, grupp] of aktivaKallor) {
+    let senaste = null;
+    for (const post of grupp) if (!post.stoppad && (!senaste || post.nr > senaste.nr)) senaste = post;
+    senaste ??= [...grupp][0];
+    const gatt = Math.max(0, nu - senaste.start);
+    ut.set(id, { antal: grupp.size, kvar: Math.max(0, senaste.langd - gatt), langd: senaste.langd });
+  }
+  return ut;
+}
