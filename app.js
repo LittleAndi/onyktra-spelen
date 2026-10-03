@@ -194,29 +194,66 @@ function renderGrenar() {
   $('grenar').classList.toggle('ordnas', Boolean(ordnar));
 }
 
+// Visselpipan kan spammas (varje tryck spelar om); övriga klipp stoppas av ett nytt tryck.
+const STOPP_SPARR_MS = 300; // ignorerar dubbeltryck som annars stoppar klippet direkt
+const startTider = new Map();
+
 function effektKnapp(effekt) {
   const knapp = el('button', { class: 'pad', type: 'button', 'data-id': effekt.id },
-    el('span', { class: `dot ${effekt.farg || 'is'}` }),
+    el('span', { class: 'ptopp' },
+      el('span', { class: `dot ${effekt.farg || 'is'}` }),
+      el('span', { class: 'pikon', 'aria-hidden': 'true' }, '▶'),
+    ),
     el('span', {},
       el('span', { class: 'pname' }, effekt.namn),
-      effekt.beskrivning ? el('span', { class: 'psub' }, effekt.beskrivning) : null,
+      el('span', { class: 'psub' }, effekt.beskrivning || ''),
     ),
+    el('span', { class: 'pframsteg', 'aria-hidden': 'true' }),
   );
-  let spelar = 0;
+  knapp.dataset.sub = effekt.beskrivning || '';
   knapp.addEventListener('click', () => {
-    const startat = ljud.spela(effekt.id, () => {
-      spelar -= 1;
-      knapp.classList.toggle('spelar', spelar > 0);
-    });
-    if (!startat) {
+    if (effekt.lage !== 'spam' && ljud.aktivaKlipp().has(effekt.id)) {
+      if (performance.now() - (startTider.get(effekt.id) ?? 0) >= STOPP_SPARR_MS) ljud.stoppa(effekt.id);
+      return;
+    }
+    if (!ljud.spela(effekt.id)) {
       visaBanner(`Klippet ${effekt.namn} är inte laddat.`);
       return;
     }
-    spelar += 1;
-    knapp.classList.add('spelar');
+    startTider.set(effekt.id, performance.now());
+    knapp.classList.remove('puls');
+    void knapp.offsetWidth; // starta om pulsanimationen vid snabba tryck
+    knapp.classList.add('puls');
+    startaKlippUppdatering();
   });
   return knapp;
 }
+
+// Uppdaterar knappar (spelar/förlopp/kvarvarande tid) och stoppchipet medan något spelar.
+let klippRam = 0;
+function startaKlippUppdatering() {
+  if (!klippRam) klippRam = requestAnimationFrame(uppdateraKlipp);
+}
+
+function uppdateraKlipp() {
+  klippRam = 0;
+  const aktiva = ljud.aktivaKlipp();
+  for (const knapp of document.querySelectorAll('.pad[data-id]')) {
+    const post = aktiva.get(knapp.dataset.id);
+    const spelar = Boolean(post);
+    knapp.classList.toggle('spelar', spelar);
+    const spam = config.effekter.find((e) => e.id === knapp.dataset.id)?.lage === 'spam';
+    knapp.querySelector('.pikon').textContent = spelar && !spam ? '■' : '▶';
+    knapp.querySelector('.psub').textContent = spelar
+      ? (post.antal > 1 ? `${post.antal} spelas` : `${Math.ceil(post.kvar)} s kvar`)
+      : knapp.dataset.sub;
+    knapp.style.setProperty('--framsteg', spelar ? String(1 - post.kvar / post.langd) : '0');
+  }
+  $('stoppa-alla').hidden = aktiva.size === 0;
+  if (aktiva.size > 0) klippRam = requestAnimationFrame(uppdateraKlipp);
+}
+
+$('stoppa-alla').addEventListener('click', () => ljud.stoppaAlla());
 
 function renderEffekter() {
   $('effekter').replaceChildren(...config.effekter.map(effektKnapp));
@@ -953,7 +990,9 @@ function timerEffekt(gren, nyckel, reserv) {
 }
 
 function spelaEffekt(id) {
-  if (id && !ljud.spela(id)) console.warn(`Klipp ${id} är inte laddat.`);
+  if (!id) return;
+  if (ljud.spela(id)) startaKlippUppdatering();
+  else console.warn(`Klipp ${id} är inte laddat.`);
 }
 
 function aterstallTimer(id = timer.gren) {

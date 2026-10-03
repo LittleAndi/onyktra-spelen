@@ -202,6 +202,7 @@ h2 {
 /* Effektknappar */
 .pads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pad {
+  position: relative; overflow: hidden;
   min-height: 76px; border-radius: 14px;
   border: 1px solid var(--line); background: var(--surface);
   display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 6px;
@@ -210,6 +211,24 @@ h2 {
 }
 .pad:active { transform: scale(.97); border-color: var(--accent); }
 .pad.spelar { border-color: var(--accent); background: var(--active); }
+.pad.spelar .pikon { color: var(--accent); }
+.ptopp { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.pikon { font-size: 12px; color: var(--muted); }
+.pframsteg {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--accent); transform-origin: left; transform: scaleX(var(--framsteg, 0));
+  opacity: 0;
+}
+.pad.spelar .pframsteg { opacity: 1; }
+.pad.puls { animation: puls .25s ease-out; }
+@keyframes puls { 0% { box-shadow: 0 0 0 0 rgb(232 176 74 / .6); } 100% { box-shadow: 0 0 0 10px rgb(232 176 74 / 0); } }
+.stoppa-alla {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 20; min-height: 48px; padding: 0 22px; border-radius: 24px;
+  background: var(--warn); color: #0F1620; font-weight: 700; font-size: 15px;
+  border: 0; box-shadow: 0 8px 24px rgb(0 0 0 / .5);
+}
+.stoppa-alla[hidden] { display: none; }
 .pad.saknas { opacity: .45; }
 .pad.saknas .psub::after { content: ' · saknas'; }
 .dot { width: 8px; height: 8px; border-radius: 4px; display: inline-block; flex-shrink: 0; }
