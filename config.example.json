@@ -93,6 +93,20 @@
       "fil": "clips/218318-splicesound-referee-whistle-blow-gymnasium.mp3"
     },
     {
+      "id": "countdown-10",
+      "namn": "Nedräkning 10",
+      "beskrivning": "10 sekunder",
+      "farg": "is",
+      "fil": "clips/countdown-10.mp3"
+    },
+    {
+      "id": "countdown-05",
+      "namn": "Nedräkning 5",
+      "beskrivning": "5 sekunder",
+      "farg": "is",
+      "fil": "clips/countdown-05.mp3"
+    },
+    {
       "id": "gong",
       "namn": "Gong",
       "beskrivning": "Tiden ute",
